@@ -28,7 +28,8 @@ dependencies = [
     "click ~= 8.1",
     "pandas ~= 2.2",
     "rich ~= 13.7",
-    "textual ~= 0.47"
+    "textual ~= 0.47",
+    "numpy ~= 1.26"
 ]
 
 [project.urls]
