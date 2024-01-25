@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyskat"
+dynamic = ["version"]
+description = 'A small CLI and TUI app for managing Skat tournaments.'
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+keywords = []
+authors = [
+    { name = "Max Weiner", email = "max.weiner@posteo.de" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+    "click ~= 8.1",
+    "pandas ~= 2.2",
+    "rich ~= 13.7",
+    "textual ~= 0.47"
+]
+
+[project.urls]
+Documentation = "https://github.com/axtimhaus/pyskat/blob/main/README.md"
+Issues = "https://github.com/axtimhaus/pyskat/issues"
+Source = "https://github.com/axtimhaus/pyskat/"
+
+[tool.hatch.version]
+path = "src/pyskat/__about__.py"
+
+[tool.hatch.build]
+packages = ["src/pyskat"]
+
+[tool.hatch.envs.default]
+path = ".venv"
+
