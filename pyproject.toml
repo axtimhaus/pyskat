@@ -26,10 +26,12 @@ classifiers = [
 ]
 dependencies = [
     "click ~= 8.1",
+    "click-repl ~= 0.3",
     "pandas ~= 2.2",
     "rich ~= 13.7",
     "textual ~= 0.47",
-    "numpy ~= 1.26"
+    "numpy ~= 1.26",
+    "tinydb ~= 4.0"
 ]
 
 [project.urls]
@@ -45,4 +47,5 @@ packages = ["src/pyskat"]
 
 [tool.hatch.envs.default]
 path = ".venv"
+dependencies = ["pytest"]
 
