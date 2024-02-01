@@ -10,7 +10,7 @@ Result = Query()
 
 class Backend:
     def __init__(self, db_path: Path):
-        self.db = TinyDB(db_path, sort_keys=True, indent=4)
+        self.db = TinyDB(db_path, indent=4)
         self._players = self.db.table("players")
         self._results = self.db.table("results")
 
@@ -41,15 +41,15 @@ class Backend:
         if not result:
             raise KeyError("Player with given ID not found.")
 
-    def get_player(self, id: int) -> dict:
+    def get_player(self, id: int) -> pd.Series:
         result = self._players.search(Player.id == id)
 
         if result:
-            return result[0]
+            return pd.Series(result[0], name=id)
 
         raise KeyError("Player not found.")
 
-    def get_players_by_name(self, name: str, exact=True) -> list[dict]:
+    def get_players_by_name(self, name: str, exact=True) -> pd.DataFrame:
         if exact:
             result = self._players.search(Player.name == name)
         else:
@@ -57,7 +57,7 @@ class Backend:
 
         if not result:
             raise KeyError("No player with given name found.")
-        return result
+        return pd.DataFrame(result)
 
     def add_result(
             self, series_id: int, table_id: int, player_id: int,
@@ -106,7 +106,7 @@ class Backend:
 
     def get_result(
             self, series_id: int, table_id: int, player_id: int
-    ) -> dict:
+    ) -> pd.Series:
         result = self._results.search(
             (Result.series_id == series_id) & (Result.table_id == table_id) & (Result.player_id == player_id)
         )
@@ -114,7 +114,7 @@ class Backend:
         if not result:
             raise KeyError("Result with specified series, table and player IDs does not exist.")
 
-        return result[0]
+        return pd.Series(result[0], name=(series_id, table_id, player_id))
 
     def remove_result(
             self, series_id: int, table_id: int, player_id: int,
@@ -158,10 +158,10 @@ class Backend:
 
         return df["lost"].sum()
 
-    def get_table_size(self, series_id: int, table_id: int):
+    def get_table_size(self, series_id: int, table_id: int) -> int:
         return len(self._results.search((Result.series_id == series_id) & (Result.table_id == table_id)))
 
-    def evaluate_results(self):
+    def evaluate_results(self) -> pd.DataFrame:
         results = self.list_results()
 
         results["won_points"] = results["won"] * 50
