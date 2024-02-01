@@ -26,11 +26,11 @@ def player():
 @click.option(
     "-r", "--remarks",
     type=click.STRING,
-    prompt=False,
-    default=None,
+    prompt=True,
+    default=""
 )
 @pass_backend
-def add(backend: Backend, id: int, name: str, remarks: Optional[str]):
+def add(backend: Backend, id: int, name: str, remarks: str):
     try:
         backend.add_player(id, name, remarks)
     except KeyError:

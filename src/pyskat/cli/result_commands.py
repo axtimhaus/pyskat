@@ -46,11 +46,12 @@ def result():
 @click.option(
     "-r", "--remarks",
     type=click.STRING,
-    default=None
+    prompt=True,
+    default="",
 )
 @pass_backend
 def add(backend: Backend, series_id: int, table_id: int, player_id: int, points: int, won: int, lost: int,
-        remarks: Optional[str]):
+        remarks: str):
     try:
         backend.add_result(series_id, table_id, player_id, points, won, lost, remarks)
     except KeyError:
