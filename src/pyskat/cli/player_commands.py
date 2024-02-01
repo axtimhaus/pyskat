@@ -46,12 +46,12 @@ def add(backend: Backend, id: int, name: str, remarks: Optional[str]):
 @click.option(
     "-n", "--name",
     type=click.STRING,
-    default=None
+    default=None,
 )
 @click.option(
     "-r", "--remarks",
     type=click.STRING,
-    default=None
+    default=None,
 )
 @pass_backend
 def update(backend: Backend, id: int, name: Optional[str], remarks: Optional[str]):
