@@ -10,7 +10,7 @@ Result = Query()
 
 class Backend:
     def __init__(self, db_path: Path):
-        self.db = TinyDB(db_path)
+        self.db = TinyDB(db_path, sort_keys=True, indent=4)
         self._players = self.db.table("players")
         self._results = self.db.table("results")
 
@@ -20,7 +20,7 @@ class Backend:
         if result:
             raise KeyError("A player with the given ID is already present.")
 
-        self._players.insert(dict(id=id, name=name, remarks=remarks))
+        self._players.insert(dict(id=id, name=name, remarks=remarks or ""))
 
     def update_player(self, id: int, name: Optional[str] = None, remarks: Optional[str] = None) -> None:
         result = self._players.search(Player.id == id)
@@ -77,7 +77,7 @@ class Backend:
             points=points,
             won=won,
             lost=lost,
-            remarks=remarks,
+            remarks=remarks or "",
         ))
 
     def update_result(
