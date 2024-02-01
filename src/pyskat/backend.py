@@ -22,7 +22,7 @@ class Backend:
 
         self._players.insert(dict(id=id, name=name, remarks=remarks))
 
-    def update_player(self, id: int, name: Optional[str], remarks: Optional[str] = None) -> None:
+    def update_player(self, id: int, name: Optional[str] = None, remarks: Optional[str] = None) -> None:
         result = self._players.search(Player.id == id)
 
         if not result:
@@ -82,7 +82,8 @@ class Backend:
 
     def update_result(
             self, series_id: int, table_id: int, player_id: int,
-            points: Optional[int], won: Optional[int], lost: Optional[int], remarks: Optional[str] = None
+            points: Optional[int] = None, won: Optional[int] = None,
+            lost: Optional[int] = None, remarks: Optional[str] = None
     ) -> None:
         result = self._results.search(
             (Result.series_id == series_id) & (Result.table_id == table_id) & (Result.player_id == player_id)
@@ -93,7 +94,7 @@ class Backend:
 
         orig = result[0]
 
-        self._results.insert(dict(
+        self._results.update(dict(
             series_id=series_id,
             table_id=table_id,
             player_id=player_id,
@@ -101,7 +102,7 @@ class Backend:
             won=won if won is not None else orig["won"],
             lost=lost if lost is not None else orig["won"],
             remarks=remarks if remarks is not None else orig["remarks"],
-        ))
+        ), (Result.series_id == series_id) & (Result.table_id == table_id) & (Result.player_id == player_id))
 
     def get_result(
             self, series_id: int, table_id: int, player_id: int

@@ -37,7 +37,7 @@ def backend(tmp_path):
     return backend
 
 
-def test_get_player_by_id(backend: Backend):
+def test_get_player(backend: Backend):
     result = backend.get_player(5)
 
     assert result["name"] == "P5"
@@ -45,6 +45,78 @@ def test_get_player_by_id(backend: Backend):
 
     with pytest.raises(KeyError):
         backend.get_player(42)
+
+
+def test_update_player(backend: Backend):
+    with pytest.raises(KeyError):
+        backend.add_player(1, "exists")
+
+    backend.update_player(1, "new")
+    assert backend.get_player(1)["name"] == "new"
+
+    backend.update_player(1, remarks="rem")
+    assert backend.get_player(1)["name"] == "new"
+    assert backend.get_player(1)["remarks"] == "rem"
+
+
+def test_remove_player(backend: Backend):
+    with pytest.raises(KeyError):
+        backend.remove_player(42)
+    backend.remove_player(1)
+
+    with pytest.raises(KeyError):
+        backend.get_player(1)
+
+
+def test_get_players_by_name(backend: Backend):
+    result = backend.get_players_by_name("P1")[0]
+    assert result["id"] == 1
+
+    result = backend.get_players_by_name("P", exact=False)
+    assert len(result) == 7
+
+    with pytest.raises(KeyError):
+        backend.get_players_by_name("abc")
+
+
+def test_get_result(backend: Backend):
+    result = backend.get_result(1, 2, 6)
+
+    assert result["points"] == 50
+    assert result["won"] == 7
+    assert result["lost"] == 3
+
+    with pytest.raises(KeyError):
+        backend.get_result(3, 1, 1)
+    with pytest.raises(KeyError):
+        backend.get_result(1, 4, 1)
+    with pytest.raises(KeyError):
+        backend.get_result(1, 1, 5)
+
+
+def test_update_result(backend: Backend):
+    with pytest.raises(KeyError):
+        backend.add_result(1, 2, 6, 100, 1, 1)
+
+    backend.update_result(1, 2, 6, 150)
+    assert backend.get_result(1, 2, 6)["points"] == 150
+
+    backend.update_result(1, 2, 6, won=1)
+    assert backend.get_result(1, 2, 6)["points"] == 150
+    assert backend.get_result(1, 2, 6)["won"] == 1
+
+
+def test_remove_result(backend: Backend):
+    with pytest.raises(KeyError):
+        backend.remove_result(3, 1, 2)
+    with pytest.raises(KeyError):
+        backend.remove_result(1, 1, 7)
+    with pytest.raises(KeyError):
+        backend.remove_result(1, 7, 2)
+    backend.remove_result(1, 2, 6)
+
+    with pytest.raises(KeyError):
+        backend.get_result(1, 2, 6)
 
 
 def test_list_players(backend: Backend):
