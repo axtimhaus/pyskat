@@ -11,21 +11,66 @@ Result = Query()
 class Backend:
     def __init__(self, db_path: Path):
         self.db = TinyDB(db_path)
-        self.players = self.db.table("players")
-        self.results = self.db.table("results")
+        self._players = self.db.table("players")
+        self._results = self.db.table("results")
 
-    def add_player(self, id: int, name: str, remarks: Optional[str] = None):
-        self.players.insert({"id": id, "name": name, "remarks": remarks})
+    def add_player(self, id: int, name: str, remarks: Optional[str] = None) -> None:
+        result = self._players.search(Player.id == id)
 
-    def get_player_by_id(self, id: int):
-        return self.players.search(Player.id == id)[0]
+        if result:
+            raise KeyError("A player with the given ID is already present.")
 
-    def get_players_by_name(self, name: str):
-        return self.players.search(Player.name == name)
+        self._players.insert(dict(id=id, name=name, remarks=remarks))
 
-    def add_result(self, series_id: int, table_id: int, player_id: int, points: int, won: int, lost: int,
-                   remarks: Optional[str] = None):
-        self.results.insert(dict(
+    def update_player(self, id: int, name: Optional[str], remarks: Optional[str] = None) -> None:
+        result = self._players.search(Player.id == id)
+
+        if not result:
+            raise KeyError("A player with the given ID was not found.")
+
+        orig = result[0]
+
+        self._players.update(dict(
+            id=id,
+            name=name if name is not None else orig["name"],
+            remarks=remarks if remarks is not None else orig["remarks"]
+        ), Player.id == id)
+
+    def remove_player(self, id: int):
+        result = self._players.remove(Player.id == id)
+        if not result:
+            raise KeyError("Player with given ID not found.")
+
+    def get_player(self, id: int) -> dict:
+        result = self._players.search(Player.id == id)
+
+        if result:
+            return result[0]
+
+        raise KeyError("Player not found.")
+
+    def get_players_by_name(self, name: str, exact=True) -> list[dict]:
+        if exact:
+            result = self._players.search(Player.name == name)
+        else:
+            result = self._players.search(Player.name.search(name))
+
+        if not result:
+            raise KeyError("No player with given name found.")
+        return result
+
+    def add_result(
+            self, series_id: int, table_id: int, player_id: int,
+            points: int, won: int, lost: int, remarks: Optional[str] = None
+    ) -> None:
+        result = self._results.search(
+            (Result.series_id == series_id) & (Result.table_id == table_id) & (Result.player_id == player_id)
+        )
+
+        if result:
+            raise KeyError("Result with specified series, table and player IDs already exists.")
+
+        self._results.insert(dict(
             series_id=series_id,
             table_id=table_id,
             player_id=player_id,
@@ -35,15 +80,60 @@ class Backend:
             remarks=remarks,
         ))
 
+    def update_result(
+            self, series_id: int, table_id: int, player_id: int,
+            points: Optional[int], won: Optional[int], lost: Optional[int], remarks: Optional[str] = None
+    ) -> None:
+        result = self._results.search(
+            (Result.series_id == series_id) & (Result.table_id == table_id) & (Result.player_id == player_id)
+        )
+
+        if not result:
+            raise KeyError("Result with specified series, table and player IDs does not exist.")
+
+        orig = result[0]
+
+        self._results.insert(dict(
+            series_id=series_id,
+            table_id=table_id,
+            player_id=player_id,
+            points=points if points is not None else orig["points"],
+            won=won if won is not None else orig["won"],
+            lost=lost if lost is not None else orig["won"],
+            remarks=remarks if remarks is not None else orig["remarks"],
+        ))
+
+    def get_result(
+            self, series_id: int, table_id: int, player_id: int
+    ) -> dict:
+        result = self._results.search(
+            (Result.series_id == series_id) & (Result.table_id == table_id) & (Result.player_id == player_id)
+        )
+
+        if not result:
+            raise KeyError("Result with specified series, table and player IDs does not exist.")
+
+        return result[0]
+
+    def remove_result(
+            self, series_id: int, table_id: int, player_id: int,
+    ) -> None:
+        result = self._results.remove(
+            (Result.series_id == series_id) & (Result.table_id == table_id) & (Result.player_id == player_id)
+        )
+
+        if not result:
+            raise KeyError("Result with specified series, table and player IDs does not exist.")
+
     def list_players(self) -> pd.DataFrame:
-        players = self.players.all()
+        players = self._players.all()
         df = pd.DataFrame(players)
         df.set_index("id", inplace=True)
         df.sort_index(inplace=True)
         return df
 
     def list_results_for_player(self, player_id: int):
-        results = self.results.search(Result.player_id == player_id)
+        results = self._results.search(Result.player_id == player_id)
         df = pd.DataFrame(results)
         df.drop("player_id", axis=1, inplace=True)
         df.set_index(["series_id", "table_id"], inplace=True)
@@ -51,14 +141,14 @@ class Backend:
         return df
 
     def list_results(self):
-        results = self.results.all()
+        results = self._results.all()
         df = pd.DataFrame(results)
         df.set_index(["series_id", "table_id", "player_id"], inplace=True)
         df.sort_index(inplace=True)
         return df
 
     def get_opponents_lost(self, series_id: int, table_id: int, player_id: int):
-        other_results = self.results.search(
+        other_results = self._results.search(
             (Result.series_id == series_id) & (Result.table_id == table_id) & (Result.player_id != player_id))
         df = pd.DataFrame(other_results)
 
@@ -68,7 +158,7 @@ class Backend:
         return df["lost"].sum()
 
     def get_table_size(self, series_id: int, table_id: int):
-        return len(self.results.search((Result.series_id == series_id) & (Result.table_id == table_id)))
+        return len(self._results.search((Result.series_id == series_id) & (Result.table_id == table_id)))
 
     def evaluate_results(self):
         results = self.list_results()
@@ -78,9 +168,14 @@ class Backend:
 
         results["table_size"] = [self.get_table_size(s, t) for (s, t, p) in results.index]
         results["opponents_lost"] = [self.get_opponents_lost(s, t, p) for (s, t, p) in results.index]
-        results["opponents_lost_points"] = results.apply(
-            lambda row: row["opponents_lost"] * (30 if row["table_size"] == 4 else 40),
-            axis=1
-        )
+
+        def calc_opponents_lost_points(row):
+            if row["table_size"] == 4:
+                return row["opponents_lost"] * 30
+            if row["table_size"] == 3:
+                return row["opponents_lost"] * 40
+            raise ValueError(f"Table size can only be 3 or 4, but was {row['table_size']}.")
+
+        results["opponents_lost_points"] = results.apply(calc_opponents_lost_points, axis=1)
 
         return results
