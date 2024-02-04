@@ -19,12 +19,6 @@ def player():
 
 @player.command()
 @click.option(
-    "-i", "--id",
-    type=click.INT,
-    prompt=True,
-    help=PLAYER_ID_HELP,
-)
-@click.option(
     "-n", "--name",
     type=click.STRING,
     prompt=True,
@@ -38,10 +32,10 @@ def player():
     help=PLAYER_REMARKS_HELP,
 )
 @pass_backend
-def add(backend: Backend, id: int, name: str, remarks: str):
+def add(backend: Backend, name: str, remarks: str):
     """Add a new player to database."""
     try:
-        backend.add_player(id, name, remarks)
+        backend.add_player(name, remarks)
     except KeyError:
         console.print_exception()
 

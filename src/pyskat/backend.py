@@ -15,38 +15,30 @@ class Backend:
         self._players = self.db.table("players")
         self._results = self.db.table("results")
 
-    def add_player(self, id: int, name: str, remarks: Optional[str] = None) -> None:
-        result = self._players.search(Player.id == id)
-
-        if result:
-            raise KeyError("A player with the given ID is already present.")
-
-        self._players.insert(dict(id=id, name=name, remarks=remarks or ""))
+    def add_player(self, name: str, remarks: Optional[str] = None) -> None:
+        self._players.insert(dict(name=name, remarks=remarks or ""))
 
     def update_player(self, id: int, name: Optional[str] = None, remarks: Optional[str] = None) -> None:
-        result = self._players.search(Player.id == id)
+        orig = self._players.get(doc_id=id)
 
-        if not result:
+        if not orig:
             raise KeyError("A player with the given ID was not found.")
 
-        orig = result[0]
-
         self._players.update(dict(
-            id=id,
             name=name if name is not None else orig["name"],
             remarks=remarks if remarks is not None else orig["remarks"]
-        ), Player.id == id)
+        ), doc_ids=[id])
 
     def remove_player(self, id: int):
-        result = self._players.remove(Player.id == id)
+        result = self._players.remove(doc_ids=[id])
         if not result:
             raise KeyError("Player with given ID not found.")
 
     def get_player(self, id: int) -> pd.Series:
-        result = self._players.search(Player.id == id)
+        result = self._players.get(doc_id=id)
 
         if result:
-            return pd.Series(result[0], name=id)
+            return pd.Series(result, name=id)
 
         raise KeyError("Player not found.")
 
@@ -58,7 +50,7 @@ class Backend:
 
         if not result:
             raise KeyError("No player with given name found.")
-        return pd.DataFrame(result)
+        return pd.DataFrame(result, index=[r.doc_id for r in result])
 
     def add_result(
             self, series_id: int, table_id: int, player_id: int,
@@ -129,8 +121,7 @@ class Backend:
 
     def list_players(self) -> pd.DataFrame:
         players = self._players.all()
-        df = pd.DataFrame(players)
-        df.set_index("id", inplace=True)
+        df = pd.DataFrame(players, index=[p.doc_id for p in players])
         df.sort_index(inplace=True)
         return df
 
@@ -181,7 +172,7 @@ class Backend:
         results["opponents_lost_points"] = results.apply(calc_opponents_lost_points, axis=1)
 
         results["score"] = (results["points"] + results["won_points"]
-                                   + results["lost_points"] + results["opponents_lost_points"])
+                            + results["lost_points"] + results["opponents_lost_points"])
         results.drop(["remarks"], axis=1, inplace=True)
 
         return results

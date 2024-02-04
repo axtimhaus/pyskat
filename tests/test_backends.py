@@ -11,13 +11,13 @@ from pyskat.backend import Backend
 def backend(tmp_path):
     backend = Backend(tmp_path / "db.json")
 
-    backend.add_player(1, "P1")
-    backend.add_player(3, "P3")
-    backend.add_player(7, "P7")
-    backend.add_player(6, "P6")
-    backend.add_player(4, "P4")
-    backend.add_player(2, "P2")
-    backend.add_player(5, "P5", "rem")
+    backend.add_player("P1")
+    backend.add_player("P2")
+    backend.add_player("P3")
+    backend.add_player("P4")
+    backend.add_player("P5", "rem")
+    backend.add_player("P6")
+    backend.add_player("P7")
 
     backend.add_result(1, 2, 6, 50, 7, 3)
     backend.add_result(1, 1, 3, 450, 5, 1)
@@ -40,6 +40,7 @@ def backend(tmp_path):
 def test_get_player(backend: Backend):
     result = backend.get_player(5)
 
+    assert result.name == 5
     assert result["name"] == "P5"
     assert result["remarks"] == "rem"
 
@@ -49,7 +50,7 @@ def test_get_player(backend: Backend):
 
 def test_update_player(backend: Backend):
     with pytest.raises(KeyError):
-        backend.add_player(1, "exists")
+        backend.update_player(634)
 
     backend.update_player(1, "new")
     assert backend.get_player(1)["name"] == "new"
@@ -69,8 +70,8 @@ def test_remove_player(backend: Backend):
 
 
 def test_get_players_by_name(backend: Backend):
-    result = backend.get_players_by_name("P1").loc[0]
-    assert result["id"] == 1
+    result = backend.get_players_by_name("P5").iloc[0]
+    assert result.name == 5
 
     result = backend.get_players_by_name("P", exact=False)
     assert len(result) == 7
@@ -171,6 +172,7 @@ def test_evaluate_total(backend: Backend):
     assert np.all(np.remainder(result["total", "won_points"], 50) == 0)
     assert np.all(result["total", "lost_points"] <= 0)
     assert np.all(np.remainder(result["total", "lost_points"], 50) == 0)
+
 
 def test_generate_series(backend: Backend):
     series = backend.generate_series()
