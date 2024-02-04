@@ -191,8 +191,28 @@ def list(backend: Backend):
 
 
 @series.command()
+@click.option(
+    "-i", "--series-id",
+    type=click.INT,
+    default=None,
+    show_default="current series",
+    help=SERIES_ID_HELP,
+)
+@pass_current_series
 @pass_backend
-def generate(backend: Backend):
+def shuffle_players(backend: Backend, current_series: CurrentSeries, series_id: Optional[int]):
     """Generate a random player distribution of players to tables."""
-    shuffle = backend.shuffle_players_to_tables()
+    if not series_id:
+        series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
+
+    old = backend.list_tables(series_id)
+    if not old.empty:
+        if not click.confirm(
+                "There is already a player-to-table distribution for this series. Proceeding will overwrite that."
+        ):
+            return
+
+    shuffle = backend.shuffle_players_to_tables(series_id)
+    shuffle.set_index(["table_id", "player_id"], inplace=True)
+    shuffle.sort_index(inplace=True)
     print_pandas_dataframe(shuffle)

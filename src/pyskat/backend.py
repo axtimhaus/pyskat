@@ -9,14 +9,24 @@ from tinydb.queries import QueryLike
 Player = Query()
 Result = Query()
 Series = Query()
+Table = Query()
 
 
 class Backend:
     def __init__(self, database_file: Path):
         self._db = TinyDB(database_file, indent=4)
+
         self._players = self._db.table("players")
+        """Table of players."""
+
         self._results = self._db.table("results")
+        """Table of game results."""
+
         self._series = self._db.table("series")
+        """Table of game series."""
+
+        self._tables = self._db.table("tables")
+        """Table of series-player-table mappings."""
 
     def add_player(self, name: str, remarks: Optional[str] = None) -> int:
         return self._players.insert(dict(name=name, remarks=remarks or ""))
@@ -193,7 +203,7 @@ class Backend:
         return concatenated
 
     def add_series(self, name: str, date: Optional[str], remarks: Optional[str]) -> int:
-        return self._series.insert(dict(name=name, date=date or "", remarks=remarks or "", players=[], tables=[]))
+        return self._series.insert(dict(name=name, date=date or "", remarks=remarks or "", players=[]))
 
     def update_series(self, id: int, name: Optional[str] = None, date: Optional[str] = None,
                       remarks: Optional[str] = None):
@@ -269,14 +279,38 @@ class Backend:
 
         concatenated = pd.concat(
             tables,
-            keys=range(0, four_player_table_count + three_player_table_count),
+            keys=range(1, four_player_table_count + three_player_table_count + 1),
             names=["table_id", "player_id"]
         )
-        concatenated.sort_index(inplace=True)
+        concatenated.reset_index(inplace=True)
+
+        self.clear_tables(series_id)
+        for index, row in concatenated.iterrows():
+            self.add_table(series_id, row["player_id"], row["table_id"])
+
         return concatenated
 
     def list_series(self) -> pd.DataFrame:
         series = self._series.all()
         df = pd.DataFrame(series, index=pd.Index([p.doc_id for p in series], name="id"))
         df.sort_index(inplace=True)
+        return df
+
+    def add_table(self, series_id: int, player_id: int, table_id: int) -> int:
+        return self._tables.insert(dict(series_id=series_id, player_id=player_id, table_id=table_id))
+
+    def remove_table(self, series_id: int, player_id: int):
+        result = self._tables.remove((Table.series_id == series_id) & (Table.player_id == player_id))
+        if not result:
+            raise KeyError("Table with given series and player not found.")
+
+    def clear_tables(self, series_id: int):
+        self._tables.remove((Table.series_id == series_id))
+
+    def list_tables(self, series_id: int = 0) -> pd.DataFrame:
+        if series_id == 0:
+            result = self._tables.all()
+        else:
+            result = self._tables.search(Table.series_id == series_id)
+        df = pd.DataFrame(result)
         return df

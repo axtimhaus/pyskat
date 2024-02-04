@@ -186,8 +186,11 @@ def test_shuffle_players_to_tables(backend: Backend):
     backend.add_players_to_series(1, "all")
     series = backend.shuffle_players_to_tables(1)
 
-    assert len(series.loc[0]) == 4
-    assert len(series.loc[1]) == 3
+    per_table = series.groupby("table_id").groups
+    assert len(per_table[1]) == 4
+    assert len(per_table[2]) == 3
+
+    assert len(backend.list_tables(1)) == 7
 
 
 def test_update_series(backend: Backend):
