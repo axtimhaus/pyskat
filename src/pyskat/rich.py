@@ -1,3 +1,5 @@
+from typing import Optional
+
 import click
 import pandas as pd
 from rich import get_console
@@ -17,8 +19,8 @@ install(
 )
 
 
-def print_pandas_dataframe(df: pd.DataFrame):
-    table = Table()
+def print_pandas_dataframe(df: pd.DataFrame, title: Optional[str] = None):
+    table = Table(title=title)
 
     for col in df.index.names:
         table.add_column(col, header_style="italic")

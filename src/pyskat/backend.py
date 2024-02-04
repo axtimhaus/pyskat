@@ -179,4 +179,22 @@ class Backend:
 
         results["opponents_lost_points"] = results.apply(calc_opponents_lost_points, axis=1)
 
+        results["total_points"] = (results["points"] + results["won_points"]
+                                   + results["lost_points"] + results["opponents_lost_points"])
+        results.drop(["remarks"], axis=1, inplace=True)
+
         return results
+
+    def evaluate_total(self) -> pd.DataFrame:
+        results = self.evaluate_results()
+
+        sums = results.groupby("player_id").sum()
+        sums.drop(["table_size"], axis=1, inplace=True)
+
+        results.reset_index(inplace=True)
+        results.drop("table_id", axis=1, inplace=True)
+        pivoted = results.pivot(index="player_id", columns="series_id").swaplevel(axis=1)
+        series = [pivoted[s] for s in pivoted.columns.levels[0]]
+        concatenated = pd.concat([*series, sums], axis=1, keys=[*pivoted.columns.levels[0], "total"])
+
+        return concatenated

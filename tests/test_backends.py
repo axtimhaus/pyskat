@@ -69,7 +69,7 @@ def test_remove_player(backend: Backend):
 
 
 def test_get_players_by_name(backend: Backend):
-    result = backend.get_players_by_name("P1")[0]
+    result = backend.get_players_by_name("P1").loc[0]
     assert result["id"] == 1
 
     result = backend.get_players_by_name("P", exact=False)
@@ -160,3 +160,14 @@ def test_evaluate_results(backend: Backend):
     assert np.all(np.remainder(result["won_points"], 50) == 0)
     assert np.all(result["lost_points"] <= 0)
     assert np.all(np.remainder(result["lost_points"], 50) == 0)
+
+
+def test_evaluate_total(backend: Backend):
+    result = backend.evaluate_total()
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 7
+    assert np.all(result["total", "won_points"] >= 0)
+    assert np.all(np.remainder(result["total", "won_points"], 50) == 0)
+    assert np.all(result["total", "lost_points"] <= 0)
+    assert np.all(np.remainder(result["total", "lost_points"], 50) == 0)
