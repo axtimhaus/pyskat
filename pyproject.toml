@@ -14,22 +14,19 @@ authors = [
     { name = "Max Weiner", email = "max.weiner@posteo.de" },
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
     "click ~= 8.1",
     "click-repl ~= 0.3",
     "pandas ~= 2.2",
     "rich ~= 13.7",
-    "textual ~= 0.47",
+#    "textual ~= 0.47",
     "numpy ~= 1.26",
     "tinydb ~= 4.0"
 ]
