@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
 
 import numpy as np
 import pandas as pd
@@ -8,17 +8,18 @@ from tinydb.queries import QueryLike
 
 Player = Query()
 Result = Query()
+Series = Query()
 
 
 class Backend:
-    def __init__(self, db_path: Path):
-        self._db = TinyDB(db_path, indent=4)
+    def __init__(self, database_file: Path):
+        self._db = TinyDB(database_file, indent=4)
         self._players = self._db.table("players")
         self._results = self._db.table("results")
         self._series = self._db.table("series")
 
-    def add_player(self, name: str, remarks: Optional[str] = None) -> None:
-        self._players.insert(dict(name=name, remarks=remarks or ""))
+    def add_player(self, name: str, remarks: Optional[str] = None) -> int:
+        return self._players.insert(dict(name=name, remarks=remarks or ""))
 
     def update_player(self, id: int, name: Optional[str] = None, remarks: Optional[str] = None) -> None:
         orig = self._players.get(doc_id=id)
@@ -48,14 +49,14 @@ class Backend:
         result = self._players.search(query)
 
         if not result:
-            return  pd.DataFrame(columns=["name", "remarks"], index=pd.Index([],name="id"))
+            return pd.DataFrame(columns=["name", "remarks"], index=pd.Index([], name="id"))
 
         return pd.DataFrame(result, index=pd.Index([p.doc_id for p in result], name="id"))
 
     def add_result(
             self, series_id: int, table_id: int, player_id: int,
             points: int, won: int, lost: int, remarks: Optional[str] = None
-    ) -> None:
+    ) -> int:
         result = self._results.search(
             (Result.series_id == series_id) & (Result.table_id == table_id) & (Result.player_id == player_id)
         )
@@ -63,7 +64,7 @@ class Backend:
         if result:
             raise KeyError("Result with specified series, table and player IDs already exists.")
 
-        self._results.insert(dict(
+        return self._results.insert(dict(
             series_id=series_id,
             table_id=table_id,
             player_id=player_id,
@@ -191,8 +192,65 @@ class Backend:
 
         return concatenated
 
-    def generate_series(self) -> pd.DataFrame:
-        players = self.list_players()
+    def add_series(self, name: str, date: Optional[str], remarks: Optional[str]) -> int:
+        return self._series.insert(dict(name=name, date=date or "", remarks=remarks or "", players=[], tables=[]))
+
+    def update_series(self, id: int, name: Optional[str] = None, date: Optional[str] = None,
+                      remarks: Optional[str] = None):
+        orig = self._series.get(doc_id=id)
+
+        if not orig:
+            raise KeyError("A series with the given ID was not found.")
+
+        self._series.update(dict(
+            name=name if name is not None else orig["name"],
+            date=date if date is not None else orig["date"],
+            remarks=remarks if remarks is not None else orig["remarks"]
+        ), doc_ids=[id])
+
+    def remove_series(self, id: int):
+        result = self._series.remove(doc_ids=[id])
+        if not result:
+            raise KeyError("Series with given ID not found.")
+
+    def get_series(self, id: int) -> pd.Series:
+        result = self._series.get(doc_id=id)
+
+        if result:
+            return pd.Series(result, name=id)
+
+        raise KeyError("Series with given ID found.")
+
+    def add_players_to_series(self, id: int, players: list[int] | Literal["all"]):
+        if not self._series.contains(doc_id=id):
+            raise KeyError("Series not found.")
+
+        if players == "all":
+            all_players = [p.doc_id for p in self._players.all()]
+            self._series.update(dict(players=all_players), doc_ids=[id])
+        else:
+            old_players = self._series.get(doc_id=id)["players"]
+            players = set(old_players).union(players)
+            self._series.update(dict(players=list(players)), doc_ids=[id])
+
+    def remove_players_from_series(self, id: int, players: list[int] | Literal["all"]):
+        if not self._series.contains(doc_id=id):
+            raise KeyError("Series not found.")
+
+        if players == "all":
+            self._series.update(dict(players=[]), doc_ids=[id])
+        else:
+            old_players = self._series.get(doc_id=id)["players"]
+            players = set(old_players).difference(players)
+            self._series.update(dict(players=list(players)), doc_ids=[id])
+
+    def shuffle_players_to_tables(self, series_id: int) -> pd.DataFrame:
+        player_ids = self._series.get(doc_id=series_id)["players"]
+
+        if not player_ids:
+            raise ValueError("This series has no players assigned.")
+
+        players = pd.DataFrame(self._players.get(doc_ids=player_ids), index=player_ids)
         shuffled = players.sample(frac=1)
 
         player_count = len(shuffled)
@@ -216,3 +274,9 @@ class Backend:
         )
         concatenated.sort_index(inplace=True)
         return concatenated
+
+    def list_series(self) -> pd.DataFrame:
+        series = self._series.all()
+        df = pd.DataFrame(series, index=pd.Index([p.doc_id for p in series], name="id"))
+        df.sort_index(inplace=True)
+        return df

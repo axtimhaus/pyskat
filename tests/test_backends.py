@@ -34,6 +34,9 @@ def backend(tmp_path):
     backend.add_result(2, 1, 6, 240, 2, 0)
     backend.add_result(2, 2, 4, 100, 2, 0)
 
+    backend.add_series("Nr1", "2024-02-04", "")
+    backend.add_series("Nr2", "2024-02-05", "")
+
     return backend
 
 
@@ -176,8 +179,45 @@ def test_evaluate_total(backend: Backend):
     assert np.all(np.remainder(result["total", "lost_points"], 50) == 0)
 
 
-def test_generate_series(backend: Backend):
-    series = backend.generate_series()
+def test_shuffle_players_to_tables(backend: Backend):
+    with pytest.raises(ValueError):
+        backend.shuffle_players_to_tables(1)
+
+    backend.add_players_to_series(1, "all")
+    series = backend.shuffle_players_to_tables(1)
 
     assert len(series.loc[0]) == 4
     assert len(series.loc[1]) == 3
+
+
+def test_update_series(backend: Backend):
+    backend.update_series(1, name="abc")
+    assert backend.get_series(1)["name"] == "abc"
+    assert backend.get_series(1)["date"] == "2024-02-04"
+
+    backend.update_series(1, date="today")
+    assert backend.get_series(1)["name"] == "abc"
+    assert backend.get_series(1)["date"] == "today"
+
+
+def test_remove_series(backend: Backend):
+    with pytest.raises(KeyError):
+        backend.remove_series(42)
+    backend.remove_series(1)
+
+    with pytest.raises(KeyError):
+        backend.get_series(1)
+
+
+def test_add_players_to_series_all(backend: Backend):
+    backend.add_players_to_series(1, "all")
+
+    series = backend.get_series(1)
+    assert series["players"] == list(range(1, 8))
+
+
+def test_add_players_to_series_ids(backend: Backend):
+    backend.add_players_to_series(1, [1, 4, 6])
+
+    series = backend.get_series(1)
+    assert series["players"] == [1, 4, 6]
