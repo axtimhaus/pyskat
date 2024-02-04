@@ -171,3 +171,9 @@ def test_evaluate_total(backend: Backend):
     assert np.all(np.remainder(result["total", "won_points"], 50) == 0)
     assert np.all(result["total", "lost_points"] <= 0)
     assert np.all(np.remainder(result["total", "lost_points"], 50) == 0)
+
+def test_generate_series(backend: Backend):
+    series = backend.generate_series()
+
+    assert len(series.loc[0]) == 4
+    assert len(series.loc[1]) == 3

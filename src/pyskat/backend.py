@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 from tinydb import TinyDB, Query, where
 
@@ -197,4 +198,30 @@ class Backend:
         series = [pivoted[s] for s in pivoted.columns.levels[0]]
         concatenated = pd.concat([*series, sums], axis=1, keys=[*pivoted.columns.levels[0], "total"])
 
+        return concatenated
+
+    def generate_series(self) -> pd.DataFrame:
+        players = self.list_players()
+        shuffled = players.sample(frac=1)
+
+        player_count = len(shuffled)
+        div, mod = divmod(player_count, 4)
+        three_player_table_count = 4 - mod
+        four_player_table_count = div + 1 - three_player_table_count
+
+        player_border = four_player_table_count * 4
+        tables = [
+                     shuffled[i:i + 4]
+                     for i in np.arange(0, player_border, 4)
+                 ] + [
+                     shuffled[i:i + 3]
+                     for i in player_border + np.arange(0, three_player_table_count * 3, 4)
+                 ]
+
+        concatenated = pd.concat(
+            tables,
+            keys=range(0, four_player_table_count + three_player_table_count),
+            names=["table_id", "player_id"]
+        )
+        concatenated.sort_index(inplace=True)
         return concatenated
