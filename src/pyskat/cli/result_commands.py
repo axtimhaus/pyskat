@@ -4,7 +4,7 @@ import click
 
 from .main import pass_backend
 from ..backend import Backend
-from ..rich import console
+from ..rich import console, print_pandas_dataframe
 
 RESULT_PLAYER_ID_HELP = "ID of the player."
 RESULT_SERIES_ID_HELP = "ID of the series."
@@ -200,4 +200,4 @@ def get(backend: Backend, series_id: int, table_id: int, player_id: int):
 def list(backend: Backend):
     """List all game results ins database."""
     results = backend.list_results()
-    console.print(results)
+    print_pandas_dataframe(results)

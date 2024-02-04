@@ -4,7 +4,7 @@ import click
 
 from .main import pass_backend
 from ..backend import Backend
-from ..rich import console
+from ..rich import console, print_pandas_dataframe
 
 PLAYER_ID_HELP = "Unique player ID."
 PLAYER_NAME_HELP = "Name (full name, nickname, ...)."
@@ -118,4 +118,4 @@ def get(backend: Backend, id: int):
 def list(backend: Backend):
     """List all players in database."""
     players = backend.list_players()
-    console.print(players)
+    print_pandas_dataframe(players)
