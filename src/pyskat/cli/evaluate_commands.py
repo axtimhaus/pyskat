@@ -9,6 +9,7 @@ from ..rich import console, print_pandas_dataframe
 
 @click.group()
 def evaluate():
+    """Evaluate game results."""
     pass
 
 
@@ -28,6 +29,7 @@ def evaluate():
 )
 @pass_backend
 def results(backend: Backend, sort_by: Optional[str], reverse: bool):
+    """Evaluate and display all game results."""
     try:
         evaluation = backend.evaluate_results()
 
@@ -52,6 +54,7 @@ def results(backend: Backend, sort_by: Optional[str], reverse: bool):
 )
 @pass_backend
 def total(backend: Backend, sort_by: Optional[str], reverse: bool):
+    """Evaluate and display game results per series and in total."""
     try:
         evaluation = backend.evaluate_total()
 
