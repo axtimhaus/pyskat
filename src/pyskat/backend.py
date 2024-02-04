@@ -180,7 +180,7 @@ class Backend:
 
         results["opponents_lost_points"] = results.apply(calc_opponents_lost_points, axis=1)
 
-        results["total_points"] = (results["points"] + results["won_points"]
+        results["score"] = (results["points"] + results["won_points"]
                                    + results["lost_points"] + results["opponents_lost_points"])
         results.drop(["remarks"], axis=1, inplace=True)
 
