@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 import tempfile
 
-from pyskat.backend import Backend
+from pyskat.backend import Backend, Player
 
 
 @pytest.fixture
@@ -69,15 +69,17 @@ def test_remove_player(backend: Backend):
         backend.get_player(1)
 
 
-def test_get_players_by_name(backend: Backend):
-    result = backend.get_players_by_name("P5").iloc[0]
+def test_query_players(backend: Backend):
+    result = backend.query_players(Player.name == "P5").iloc[0]
     assert result.name == 5
 
-    result = backend.get_players_by_name("P", exact=False)
+    result = backend.query_players(Player.name.search("P"))
     assert len(result) == 7
 
-    with pytest.raises(KeyError):
-        backend.get_players_by_name("abc")
+    result = backend.query_players(Player.name == "abc")
+    assert len(result) == 0
+    assert result.index.name == "id"
+    assert all(result.columns == ["name", "remarks"])
 
 
 def test_get_result(backend: Backend):

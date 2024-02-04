@@ -3,7 +3,8 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from tinydb import TinyDB, Query, where
+from tinydb import TinyDB, Query
+from tinydb.queries import QueryLike
 
 Player = Query()
 Result = Query()
@@ -11,9 +12,10 @@ Result = Query()
 
 class Backend:
     def __init__(self, db_path: Path):
-        self.db = TinyDB(db_path, indent=4)
-        self._players = self.db.table("players")
-        self._results = self.db.table("results")
+        self._db = TinyDB(db_path, indent=4)
+        self._players = self._db.table("players")
+        self._results = self._db.table("results")
+        self._series = self._db.table("series")
 
     def add_player(self, name: str, remarks: Optional[str] = None) -> None:
         self._players.insert(dict(name=name, remarks=remarks or ""))
@@ -42,15 +44,13 @@ class Backend:
 
         raise KeyError("Player not found.")
 
-    def get_players_by_name(self, name: str, exact=True) -> pd.DataFrame:
-        if exact:
-            result = self._players.search(Player.name == name)
-        else:
-            result = self._players.search(Player.name.search(name))
+    def query_players(self, query: QueryLike):
+        result = self._players.search(query)
 
         if not result:
-            raise KeyError("No player with given name found.")
-        return pd.DataFrame(result, index=[r.doc_id for r in result])
+            return  pd.DataFrame(columns=["name", "remarks"], index=pd.Index([],name="id"))
+
+        return pd.DataFrame(result, index=pd.Index([p.doc_id for p in result], name="id"))
 
     def add_result(
             self, series_id: int, table_id: int, player_id: int,
@@ -121,7 +121,7 @@ class Backend:
 
     def list_players(self) -> pd.DataFrame:
         players = self._players.all()
-        df = pd.DataFrame(players, index=[p.doc_id for p in players])
+        df = pd.DataFrame(players, index=pd.Index([p.doc_id for p in players], name="id"))
         df.sort_index(inplace=True)
         return df
 
