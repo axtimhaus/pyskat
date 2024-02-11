@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 import tempfile
 
-from pyskat.backend import Backend, Player
+from pyskat.backend import Backend, Player, Table
 
 
 @pytest.fixture
@@ -34,20 +34,10 @@ def backend(tmp_path):
     backend.add_result(2, 6, 240, 2, 0)
     backend.add_result(2, 4, 100, 2, 0)
 
-    backend.add_table(1, 1, 2)
-    backend.add_table(1, 2, 1)
-    backend.add_table(1, 3, 2)
-    backend.add_table(1, 4, 1)
-    backend.add_table(1, 5, 2)
-    backend.add_table(1, 6, 1)
-    backend.add_table(1, 7, 1)
-    backend.add_table(2, 1, 1)
-    backend.add_table(2, 2, 2)
-    backend.add_table(2, 3, 1)
-    backend.add_table(2, 4, 1)
-    backend.add_table(2, 5, 2)
-    backend.add_table(2, 6, 2)
-    backend.add_table(2, 7, 1)
+    backend.add_table(1, 1, [2, 4, 6, 7])
+    backend.add_table(1, 2, [1, 3, 5])
+    backend.add_table(2, 1, [1, 3, 4, 7])
+    backend.add_table(2, 2, [2, 5, 6])
 
     backend.add_series("Nr1", "2024-02-04", "")
     backend.add_series("Nr2", "2024-02-05", "")
@@ -177,13 +167,12 @@ def test_shuffle_players_to_tables(backend: Backend):
         backend.shuffle_players_to_tables(1)
 
     backend.add_players_to_series(1, "all")
-    series = backend.shuffle_players_to_tables(1)
+    backend.shuffle_players_to_tables(1)
 
-    per_table = series.groupby("table_id").groups
-    assert len(per_table[1]) == 4
-    assert len(per_table[2]) == 3
+    assert len(backend.get_table(1, 1)["players"]) == 4
+    assert len(backend.get_table(1, 2)["players"]) == 3
 
-    assert len(backend.list_tables(1)) == 7
+    assert len(backend.list_tables(1)) == 2
 
 
 def test_update_series(backend: Backend):

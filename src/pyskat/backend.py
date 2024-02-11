@@ -14,7 +14,9 @@ Table = Query()
 
 
 class Backend:
-    def __init__(self, database_file: Path, result_id_module=1000):
+    def __init__(
+        self, database_file: Path, result_id_module=1000, table_id_module=1000
+    ):
         self._db = TinyDB(database_file, indent=4)
 
         self._players = self._db.table("players")
@@ -30,6 +32,8 @@ class Backend:
         """Table of series-player-table mappings."""
 
         self.result_id_module = result_id_module
+
+        self.table_id_module = table_id_module
 
     def add_player(self, name: str, remarks: Optional[str] = None) -> int:
         return self._players.insert(dict(name=name, remarks=remarks or ""))
@@ -197,17 +201,9 @@ class Backend:
         return df
 
     def get_opponents_lost(self, series_id: int, player_id: int):
-        table_id = self._tables.get(
-            (Table.player_id == player_id) & (Table.series_id == series_id)
-        )["table_id"]
-        other_players = [
-            t["player_id"]
-            for t in self._tables.search(
-                (Table.player_id != player_id)
-                & (Table.series_id == series_id)
-                & (Table.table_id == table_id)
-            )
-        ]
+        table = self.get_table_with_player(series_id, player_id)
+        other_players = list(table["players"])
+        other_players.remove(player_id)
         other_results = self._results.get(
             doc_ids=self.result_id(series_id, other_players)
         )
@@ -218,14 +214,19 @@ class Backend:
 
         return df["lost"].sum()
 
-    def get_table_size(self, series_id: int, player_id: int) -> int:
-        table_id = self._tables.get(
-            (Table.player_id == player_id) & (Table.series_id == series_id)
-        )["table_id"]
-        others = self._tables.get(
-            (Table.table_id == table_id) & (Table.series_id == series_id)
+    def get_table_with_player(self, series_id: int, player_id: int) -> dict:
+        table = self._tables.get(
+            (Table.series_id == series_id)
+            & (Table.players.test(lambda t: player_id in t))
         )
-        return len(others)
+
+        if not table:
+            raise KeyError("No table with this player in this series.")
+
+        return table
+
+    def get_table_size(self, series_id: int, player_id: int) -> int:
+        return len(self.get_table_with_player(series_id, player_id)["players"])
 
     def evaluate_results(self) -> pd.DataFrame:
         results = self.list_results()
@@ -367,23 +368,14 @@ class Backend:
         four_player_table_count = div + 1 - three_player_table_count
 
         player_border = four_player_table_count * 4
-        tables = [shuffled[i : i + 4] for i in np.arange(0, player_border, 4)] + [
-            shuffled[i : i + 3]
+        tables = [shuffled[i : i + 4].index for i in np.arange(0, player_border, 4)] + [
+            shuffled[i : i + 3].index
             for i in player_border + np.arange(0, three_player_table_count * 3, 4)
         ]
 
-        concatenated = pd.concat(
-            tables,
-            keys=range(1, four_player_table_count + three_player_table_count + 1),
-            names=["table_id", "player_id"],
-        )
-        concatenated.reset_index(inplace=True)
-
         self.clear_tables(series_id)
-        for index, row in concatenated.iterrows():
-            self.add_table(series_id, row["player_id"], row["table_id"])
-
-        return concatenated
+        for i, ps in enumerate(tables, 1):
+            self.add_table(series_id, i, list(ps))
 
     def list_series(self) -> pd.DataFrame:
         series = self._series.all()
@@ -391,17 +383,36 @@ class Backend:
         df.sort_index(inplace=True)
         return df
 
-    def add_table(self, series_id: int, player_id: int, table_id: int) -> int:
+    def combined_table_id(
+        self, series_id: int | list[int], table_id: int | list[int]
+    ) -> int | list[int]:
+        return np.array(series_id) * self.result_id_module + np.array(table_id)
+
+    def add_table(self, series_id: int, table_id: int, player_ids: list[int]) -> int:
+        if not (3 <= len(player_ids) <= 4):
+            raise ValueError("Table size can only be 3 or 4.")
+
         return self._tables.insert(
-            dict(series_id=series_id, player_id=player_id, table_id=table_id)
+            Document(
+                dict(series_id=series_id, table_id=table_id, players=player_ids),
+                doc_id=self.combined_table_id(series_id, table_id),
+            )
         )
 
-    def remove_table(self, series_id: int, player_id: int):
+    def get_table(self, series_id: int, table_id: int) -> pd.Series:
+        result = self._tables.get(doc_id=self.combined_table_id(series_id, table_id))
+
+        if not result:
+            raise KeyError("Table with specified ID in series not found.")
+
+        return pd.Series(result, name=(series_id, table_id))
+
+    def remove_table(self, series_id: int, table_id: int):
         result = self._tables.remove(
-            (Table.series_id == series_id) & (Table.player_id == player_id)
+            doc_ids=[self.combined_table_id(series_id, table_id)]
         )
         if not result:
-            raise KeyError("Table with given series and player not found.")
+            raise KeyError("Table with given ID and in series not found.")
 
     def clear_tables(self, series_id: int):
         self._tables.remove((Table.series_id == series_id))
@@ -411,12 +422,12 @@ class Backend:
 
         if not result:
             return pd.DataFrame(
-                columns=["table_id"],
-                index=pd.MultiIndex([[], []], names=["series_id", "player_id"]),
+                columns=["players"],
+                index=pd.MultiIndex([[], []], names=["series_id", "table_id"]),
             )
 
         df = pd.DataFrame(result)
-        df.set_index(["series_id", "player_id"], inplace=True)
+        df.set_index(["series_id", "table_id"], inplace=True)
         return df
 
     def list_tables(self, series_id: int = 0) -> pd.DataFrame:
@@ -424,5 +435,13 @@ class Backend:
             result = self._tables.all()
         else:
             result = self._tables.search(Table.series_id == series_id)
+
+        if not result:
+            return pd.DataFrame(
+                columns=["players"],
+                index=pd.MultiIndex([[], []], names=["series_id", "table_id"]),
+            )
+
         df = pd.DataFrame(result)
+        df.set_index(["series_id", "table_id"], inplace=True)
         return df
