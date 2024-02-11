@@ -4,6 +4,7 @@ from typing import Optional, Literal
 import numpy as np
 import pandas as pd
 from tinydb import TinyDB, Query
+from tinydb.table import Document
 from tinydb.queries import QueryLike
 
 Player = Query()
@@ -13,7 +14,7 @@ Table = Query()
 
 
 class Backend:
-    def __init__(self, database_file: Path):
+    def __init__(self, database_file: Path, result_id_module=1000):
         self._db = TinyDB(database_file, indent=4)
 
         self._players = self._db.table("players")
@@ -27,6 +28,8 @@ class Backend:
 
         self._tables = self._db.table("tables")
         """Table of series-player-table mappings."""
+
+        self.result_id_module = result_id_module
 
     def add_player(self, name: str, remarks: Optional[str] = None) -> int:
         return self._players.insert(dict(name=name, remarks=remarks or ""))
@@ -80,6 +83,11 @@ class Backend:
         df.sort_index(inplace=True)
         return df
 
+    def result_id(
+        self, series_id: int | list[int], player_id: int | list[int]
+    ) -> int | list[int]:
+        return np.array(series_id) * self.result_id_module + np.array(player_id)
+
     def add_result(
         self,
         series_id: int,
@@ -89,9 +97,8 @@ class Backend:
         lost: int,
         remarks: Optional[str] = None,
     ) -> int:
-        result = self._results.search(
-            (Result.series_id == series_id) & (Result.player_id == player_id)
-        )
+        doc_id = self.result_id(series_id, player_id)
+        result = self._results.get(doc_id=doc_id)
 
         if result:
             raise KeyError(
@@ -99,13 +106,14 @@ class Backend:
             )
 
         return self._results.insert(
-            dict(
-                series_id=series_id,
-                player_id=player_id,
-                points=points,
-                won=won,
-                lost=lost,
-                remarks=remarks or "",
+            Document(
+                dict(
+                    points=points,
+                    won=won,
+                    lost=lost,
+                    remarks=remarks or "",
+                ),
+                doc_id,
             )
         )
 
@@ -118,16 +126,15 @@ class Backend:
         lost: Optional[int] = None,
         remarks: Optional[str] = None,
     ) -> None:
-        result = self._results.search(
-            (Result.series_id == series_id) & (Result.player_id == player_id)
-        )
+        doc_id = self.result_id(series_id, player_id)
+        result = self._results.get(doc_id=doc_id)
 
         if not result:
             raise KeyError(
                 "Result with specified series, and player IDs does not exist."
             )
 
-        orig = result[0]
+        orig = result
 
         self._results.update(
             dict(
@@ -138,29 +145,25 @@ class Backend:
                 lost=lost if lost is not None else orig["won"],
                 remarks=remarks if remarks is not None else orig["remarks"],
             ),
-            (Result.series_id == series_id) & (Result.player_id == player_id),
+            doc_ids=[doc_id],
         )
 
     def get_result(self, series_id: int, player_id: int) -> pd.Series:
-        result = self._results.search(
-            (Result.series_id == series_id) & (Result.player_id == player_id)
-        )
+        result = self._results.get(doc_id=self.result_id(series_id, player_id))
 
         if not result:
             raise KeyError(
                 "Result with specified series, table and player IDs does not exist."
             )
 
-        return pd.Series(result[0], name=(series_id, player_id))
+        return pd.Series(result, name=(series_id, player_id))
 
     def remove_result(
         self,
         series_id: int,
         player_id: int,
     ) -> None:
-        result = self._results.remove(
-            (Result.series_id == series_id) & (Result.player_id == player_id)
-        )
+        result = self._results.remove(doc_ids=[self.result_id(series_id, player_id)])
 
         if not result:
             raise KeyError(
@@ -177,12 +180,18 @@ class Backend:
             )
 
         df = pd.DataFrame(result)
+        df["series_id"], df["player_id"] = np.divmod(
+            [r.doc_id for r in result], self.result_id_module
+        )
         df.set_index(["series_id", "player_id"], inplace=True)
         return df
 
     def list_results(self):
         results = self._results.all()
         df = pd.DataFrame(results)
+        df["series_id"], df["player_id"] = np.divmod(
+            [r.doc_id for r in results], self.result_id_module
+        )
         df.set_index(["series_id", "player_id"], inplace=True)
         df.sort_index(inplace=True)
         return df
@@ -199,8 +208,8 @@ class Backend:
                 & (Table.table_id == table_id)
             )
         ]
-        other_results = self._results.search(
-            (Result.series_id == series_id) & (Result.player_id.one_of(other_players))
+        other_results = self._results.get(
+            doc_ids=self.result_id(series_id, other_players)
         )
         df = pd.DataFrame(other_results)
 
