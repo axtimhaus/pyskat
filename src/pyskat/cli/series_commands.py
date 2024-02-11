@@ -3,17 +3,33 @@ from pathlib import Path
 from typing import Optional
 
 import click
+from click.shell_completion import CompletionItem
 
 from .config import APP_DIR
 from .main import pass_backend
-from .player_commands import PLAYER_ID_HELP
 from ..backend import Backend
 from ..rich import console, print_pandas_dataframe
 
-SERIES_ID_HELP = "Unique ID of the series."
 SERIES_NAME_HELP = "A name for the series."
 SERIES_DATE_HELP = "The date or time stamp the series was played on."
 SERIES_REMARKS_HELP = "Additional remarks."
+
+
+def complete_series_id(ctx: click.Context, param, incomplete):
+
+    backend: Backend = ctx.find_object(Backend)
+    df = backend.list_series()
+    df.reset_index(inplace=True)
+    df["matches"] = df["id"].apply(lambda i: str(i).startswith(str(incomplete)))
+    df.query("matches", inplace=True)
+
+    c = [CompletionItem(t[0], help=t[1]) for t in df.itertuples(index=False)]
+    return c
+
+
+series_id_argument = click.argument(
+    "series_id", type=click.INT, shell_complete=complete_series_id, required=False
+)
 
 
 class CurrentSeries:
@@ -102,29 +118,16 @@ def add(
 
 
 @series.command()
-@click.option(
-    "-i",
-    "--id",
-    type=click.INT,
-    prompt=True,
-    help=SERIES_ID_HELP,
-)
+@series_id_argument
 @pass_current_series
 @pass_backend
-def set(backend: Backend, current_series: CurrentSeries, id: int):
+def set(backend: Backend, current_series: CurrentSeries, series_id: int):
     """Set the current series to ID."""
-    current_series.set(id)
+    current_series.set(series_id)
 
 
 @series.command()
-@click.option(
-    "-i",
-    "--series-id",
-    type=click.INT,
-    default=None,
-    show_default="current series",
-    help=SERIES_ID_HELP,
-)
+@series_id_argument
 @click.option(
     "-a",
     "--all",
@@ -163,14 +166,7 @@ def add_players(
 
 
 @series.command()
-@click.option(
-    "-i",
-    "--series-id",
-    type=click.INT,
-    default=None,
-    show_default="current series",
-    help=SERIES_ID_HELP,
-)
+@series_id_argument
 @click.option(
     "-a",
     "--all",
@@ -217,14 +213,7 @@ def list(backend: Backend):
 
 
 @series.command()
-@click.option(
-    "-i",
-    "--series-id",
-    type=click.INT,
-    default=None,
-    show_default="current series",
-    help=SERIES_ID_HELP,
-)
+@series_id_argument
 @pass_current_series
 @pass_backend
 def shuffle_players(

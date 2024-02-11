@@ -3,6 +3,8 @@ from typing import Optional
 import click
 
 from .main import pass_backend
+from .player_commands import player_id_argument
+from .series_commands import series_id_argument
 from ..backend import Backend
 from ..rich import console, print_pandas_dataframe
 
@@ -21,20 +23,8 @@ def result():
 
 
 @result.command()
-@click.option(
-    "-s",
-    "--series-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_SERIES_ID_HELP,
-)
-@click.option(
-    "-p",
-    "--player-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_PLAYER_ID_HELP,
-)
+@player_id_argument
+@series_id_argument
 @click.option(
     "-P",
     "--points",
@@ -82,20 +72,8 @@ def add(
 
 
 @result.command()
-@click.option(
-    "-s",
-    "--series-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_SERIES_ID_HELP,
-)
-@click.option(
-    "-p",
-    "--player-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_PLAYER_ID_HELP,
-)
+@player_id_argument
+@series_id_argument
 @click.option(
     "-P",
     "--points",
@@ -159,20 +137,8 @@ def update(
 
 
 @result.command()
-@click.option(
-    "-s",
-    "--series-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_SERIES_ID_HELP,
-)
-@click.option(
-    "-p",
-    "--player-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_PLAYER_ID_HELP,
-)
+@player_id_argument
+@series_id_argument
 @pass_backend
 def remove(backend: Backend, series_id: int, player_id: int):
     """Remove a game result from database."""
@@ -183,20 +149,8 @@ def remove(backend: Backend, series_id: int, player_id: int):
 
 
 @result.command()
-@click.option(
-    "-s",
-    "--series-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_SERIES_ID_HELP,
-)
-@click.option(
-    "-p",
-    "--player-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_PLAYER_ID_HELP,
-)
+@player_id_argument
+@series_id_argument
 @pass_backend
 def get(backend: Backend, series_id: int, player_id: int):
     """Get a game result from database."""
