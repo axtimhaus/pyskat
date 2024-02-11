@@ -31,16 +31,21 @@ class Backend:
     def add_player(self, name: str, remarks: Optional[str] = None) -> int:
         return self._players.insert(dict(name=name, remarks=remarks or ""))
 
-    def update_player(self, id: int, name: Optional[str] = None, remarks: Optional[str] = None) -> None:
+    def update_player(
+        self, id: int, name: Optional[str] = None, remarks: Optional[str] = None
+    ) -> None:
         orig = self._players.get(doc_id=id)
 
         if not orig:
             raise KeyError("A player with the given ID was not found.")
 
-        self._players.update(dict(
-            name=name if name is not None else orig["name"],
-            remarks=remarks if remarks is not None else orig["remarks"]
-        ), doc_ids=[id])
+        self._players.update(
+            dict(
+                name=name if name is not None else orig["name"],
+                remarks=remarks if remarks is not None else orig["remarks"],
+            ),
+            doc_ids=[id],
+        )
 
     def remove_player(self, id: int):
         result = self._players.remove(doc_ids=[id])
@@ -59,78 +64,106 @@ class Backend:
         result = self._players.search(query)
 
         if not result:
-            return pd.DataFrame(columns=["name", "remarks"], index=pd.Index([], name="id"))
+            return pd.DataFrame(
+                columns=["name", "remarks"], index=pd.Index([], name="id")
+            )
 
-        return pd.DataFrame(result, index=pd.Index([p.doc_id for p in result], name="id"))
+        return pd.DataFrame(
+            result, index=pd.Index([p.doc_id for p in result], name="id")
+        )
 
     def add_result(
-            self, series_id: int, player_id: int,
-            points: int, won: int, lost: int, remarks: Optional[str] = None
+        self,
+        series_id: int,
+        player_id: int,
+        points: int,
+        won: int,
+        lost: int,
+        remarks: Optional[str] = None,
     ) -> int:
         result = self._results.search(
             (Result.series_id == series_id) & (Result.player_id == player_id)
         )
 
         if result:
-            raise KeyError("Result with specified series, table and player IDs already exists.")
+            raise KeyError(
+                "Result with specified series, table and player IDs already exists."
+            )
 
-        return self._results.insert(dict(
-            series_id=series_id,
-            player_id=player_id,
-            points=points,
-            won=won,
-            lost=lost,
-            remarks=remarks or "",
-        ))
+        return self._results.insert(
+            dict(
+                series_id=series_id,
+                player_id=player_id,
+                points=points,
+                won=won,
+                lost=lost,
+                remarks=remarks or "",
+            )
+        )
 
     def update_result(
-            self, series_id: int, player_id: int,
-            points: Optional[int] = None, won: Optional[int] = None,
-            lost: Optional[int] = None, remarks: Optional[str] = None
+        self,
+        series_id: int,
+        player_id: int,
+        points: Optional[int] = None,
+        won: Optional[int] = None,
+        lost: Optional[int] = None,
+        remarks: Optional[str] = None,
     ) -> None:
         result = self._results.search(
             (Result.series_id == series_id) & (Result.player_id == player_id)
         )
 
         if not result:
-            raise KeyError("Result with specified series, and player IDs does not exist.")
+            raise KeyError(
+                "Result with specified series, and player IDs does not exist."
+            )
 
         orig = result[0]
 
-        self._results.update(dict(
-            series_id=series_id,
-            player_id=player_id,
-            points=points if points is not None else orig["points"],
-            won=won if won is not None else orig["won"],
-            lost=lost if lost is not None else orig["won"],
-            remarks=remarks if remarks is not None else orig["remarks"],
-        ), (Result.series_id == series_id) & (Result.player_id == player_id))
+        self._results.update(
+            dict(
+                series_id=series_id,
+                player_id=player_id,
+                points=points if points is not None else orig["points"],
+                won=won if won is not None else orig["won"],
+                lost=lost if lost is not None else orig["won"],
+                remarks=remarks if remarks is not None else orig["remarks"],
+            ),
+            (Result.series_id == series_id) & (Result.player_id == player_id),
+        )
 
-    def get_result(
-            self, series_id: int, player_id: int
-    ) -> pd.Series:
+    def get_result(self, series_id: int, player_id: int) -> pd.Series:
         result = self._results.search(
             (Result.series_id == series_id) & (Result.player_id == player_id)
         )
 
         if not result:
-            raise KeyError("Result with specified series, table and player IDs does not exist.")
+            raise KeyError(
+                "Result with specified series, table and player IDs does not exist."
+            )
 
         return pd.Series(result[0], name=(series_id, player_id))
 
     def remove_result(
-            self, series_id: int, player_id: int,
+        self,
+        series_id: int,
+        player_id: int,
     ) -> None:
         result = self._results.remove(
             (Result.series_id == series_id) & (Result.player_id == player_id)
         )
 
         if not result:
-            raise KeyError("Result with specified series, table and player IDs does not exist.")
+            raise KeyError(
+                "Result with specified series, table and player IDs does not exist."
+            )
 
     def list_players(self) -> pd.DataFrame:
         players = self._players.all()
-        df = pd.DataFrame(players, index=pd.Index([p.doc_id for p in players], name="id"))
+        df = pd.DataFrame(
+            players, index=pd.Index([p.doc_id for p in players], name="id")
+        )
         df.sort_index(inplace=True)
         return df
 
@@ -150,11 +183,20 @@ class Backend:
         return df
 
     def get_opponents_lost(self, series_id: int, player_id: int):
-        table_id = self._tables.get((Table.player_id == player_id) & (Table.series_id == series_id))["table_id"]
-        other_players = [t["player_id"] for t in self._tables.search(
-            (Table.player_id != player_id) & (Table.series_id == series_id) & (Table.table_id == table_id))]
+        table_id = self._tables.get(
+            (Table.player_id == player_id) & (Table.series_id == series_id)
+        )["table_id"]
+        other_players = [
+            t["player_id"]
+            for t in self._tables.search(
+                (Table.player_id != player_id)
+                & (Table.series_id == series_id)
+                & (Table.table_id == table_id)
+            )
+        ]
         other_results = self._results.search(
-            (Result.series_id == series_id) & (Result.player_id.one_of(other_players)))
+            (Result.series_id == series_id) & (Result.player_id.one_of(other_players))
+        )
         df = pd.DataFrame(other_results)
 
         if len(df) == 0:
@@ -163,8 +205,12 @@ class Backend:
         return df["lost"].sum()
 
     def get_table_size(self, series_id: int, player_id: int) -> int:
-        table_id = self._tables.get((Table.player_id == player_id) & (Table.series_id == series_id))["table_id"]
-        others = self._tables.get((Table.table_id == table_id) & (Table.series_id == series_id))
+        table_id = self._tables.get(
+            (Table.player_id == player_id) & (Table.series_id == series_id)
+        )["table_id"]
+        others = self._tables.get(
+            (Table.table_id == table_id) & (Table.series_id == series_id)
+        )
         return len(others)
 
     def evaluate_results(self) -> pd.DataFrame:
@@ -174,19 +220,29 @@ class Backend:
         results["lost_points"] = -results["lost"] * 50
 
         results["table_size"] = [self.get_table_size(s, p) for (s, p) in results.index]
-        results["opponents_lost"] = [self.get_opponents_lost(s, p) for (s, p) in results.index]
+        results["opponents_lost"] = [
+            self.get_opponents_lost(s, p) for (s, p) in results.index
+        ]
 
         def calc_opponents_lost_points(row):
             if row["table_size"] == 4:
                 return row["opponents_lost"] * 30
             if row["table_size"] == 3:
                 return row["opponents_lost"] * 40
-            raise ValueError(f"Table size can only be 3 or 4, but was {row['table_size']}.")
+            raise ValueError(
+                f"Table size can only be 3 or 4, but was {row['table_size']}."
+            )
 
-        results["opponents_lost_points"] = results.apply(calc_opponents_lost_points, axis=1)
+        results["opponents_lost_points"] = results.apply(
+            calc_opponents_lost_points, axis=1
+        )
 
-        results["score"] = (results["points"] + results["won_points"]
-                            + results["lost_points"] + results["opponents_lost_points"])
+        results["score"] = (
+            results["points"]
+            + results["won_points"]
+            + results["lost_points"]
+            + results["opponents_lost_points"]
+        )
         results.drop(["remarks"], axis=1, inplace=True)
 
         return results
@@ -198,27 +254,41 @@ class Backend:
         sums.drop(["table_size"], axis=1, inplace=True)
 
         results.reset_index(inplace=True)
-        pivoted = results.pivot(index="player_id", columns="series_id").swaplevel(axis=1)
+        pivoted = results.pivot(index="player_id", columns="series_id").swaplevel(
+            axis=1
+        )
         series = [pivoted[s] for s in pivoted.columns.levels[0]]
-        concatenated = pd.concat([*series, sums], axis=1, keys=[*pivoted.columns.levels[0], "total"])
+        concatenated = pd.concat(
+            [*series, sums], axis=1, keys=[*pivoted.columns.levels[0], "total"]
+        )
 
         return concatenated
 
     def add_series(self, name: str, date: Optional[str], remarks: Optional[str]) -> int:
-        return self._series.insert(dict(name=name, date=date or "", remarks=remarks or "", players=[]))
+        return self._series.insert(
+            dict(name=name, date=date or "", remarks=remarks or "", players=[])
+        )
 
-    def update_series(self, id: int, name: Optional[str] = None, date: Optional[str] = None,
-                      remarks: Optional[str] = None):
+    def update_series(
+        self,
+        id: int,
+        name: Optional[str] = None,
+        date: Optional[str] = None,
+        remarks: Optional[str] = None,
+    ):
         orig = self._series.get(doc_id=id)
 
         if not orig:
             raise KeyError("A series with the given ID was not found.")
 
-        self._series.update(dict(
-            name=name if name is not None else orig["name"],
-            date=date if date is not None else orig["date"],
-            remarks=remarks if remarks is not None else orig["remarks"]
-        ), doc_ids=[id])
+        self._series.update(
+            dict(
+                name=name if name is not None else orig["name"],
+                date=date if date is not None else orig["date"],
+                remarks=remarks if remarks is not None else orig["remarks"],
+            ),
+            doc_ids=[id],
+        )
 
     def remove_series(self, id: int):
         result = self._series.remove(doc_ids=[id])
@@ -271,18 +341,15 @@ class Backend:
         four_player_table_count = div + 1 - three_player_table_count
 
         player_border = four_player_table_count * 4
-        tables = [
-                     shuffled[i:i + 4]
-                     for i in np.arange(0, player_border, 4)
-                 ] + [
-                     shuffled[i:i + 3]
-                     for i in player_border + np.arange(0, three_player_table_count * 3, 4)
-                 ]
+        tables = [shuffled[i : i + 4] for i in np.arange(0, player_border, 4)] + [
+            shuffled[i : i + 3]
+            for i in player_border + np.arange(0, three_player_table_count * 3, 4)
+        ]
 
         concatenated = pd.concat(
             tables,
             keys=range(1, four_player_table_count + three_player_table_count + 1),
-            names=["table_id", "player_id"]
+            names=["table_id", "player_id"],
         )
         concatenated.reset_index(inplace=True)
 
@@ -299,10 +366,14 @@ class Backend:
         return df
 
     def add_table(self, series_id: int, player_id: int, table_id: int) -> int:
-        return self._tables.insert(dict(series_id=series_id, player_id=player_id, table_id=table_id))
+        return self._tables.insert(
+            dict(series_id=series_id, player_id=player_id, table_id=table_id)
+        )
 
     def remove_table(self, series_id: int, player_id: int):
-        result = self._tables.remove((Table.series_id == series_id) & (Table.player_id == player_id))
+        result = self._tables.remove(
+            (Table.series_id == series_id) & (Table.player_id == player_id)
+        )
         if not result:
             raise KeyError("Table with given series and player not found.")
 

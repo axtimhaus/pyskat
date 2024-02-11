@@ -22,45 +22,58 @@ def result():
 
 @result.command()
 @click.option(
-    "-s", "--series-id",
+    "-s",
+    "--series-id",
     type=click.INT,
     prompt=True,
     help=RESULT_SERIES_ID_HELP,
 )
 @click.option(
-    "-p", "--player-id",
+    "-p",
+    "--player-id",
     type=click.INT,
     prompt=True,
     help=RESULT_PLAYER_ID_HELP,
 )
 @click.option(
-    "-P", "--points",
+    "-P",
+    "--points",
     type=click.INT,
     prompt=True,
     help=RESULT_POINTS_HELP,
 )
 @click.option(
-    "-W", "--won",
+    "-W",
+    "--won",
     type=click.INT,
     prompt=True,
     help=RESULT_WON_HELP,
 )
 @click.option(
-    "-L", "--lost",
+    "-L",
+    "--lost",
     type=click.INT,
     prompt=True,
     help=RESULT_LOST_HELP,
 )
 @click.option(
-    "-r", "--remarks",
+    "-r",
+    "--remarks",
     type=click.STRING,
     prompt=True,
     default="",
     help=RESULT_REMARKS_HELP,
 )
 @pass_backend
-def add(backend: Backend, series_id: int, player_id: int, points: int, won: int, lost: int,
-        remarks: str):
+def add(
+    backend: Backend,
+    series_id: int,
+    player_id: int,
+    points: int,
+    won: int,
+    lost: int,
+    remarks: str,
+):
     """Add a new game result to database."""
     try:
         backend.add_result(series_id, player_id, points, won, lost, remarks)
@@ -70,54 +83,75 @@ def add(backend: Backend, series_id: int, player_id: int, points: int, won: int,
 
 @result.command()
 @click.option(
-    "-s", "--series-id",
+    "-s",
+    "--series-id",
     type=click.INT,
     prompt=True,
     help=RESULT_SERIES_ID_HELP,
 )
 @click.option(
-    "-p", "--player-id",
+    "-p",
+    "--player-id",
     type=click.INT,
     prompt=True,
     help=RESULT_PLAYER_ID_HELP,
 )
 @click.option(
-    "-P", "--points",
+    "-P",
+    "--points",
     type=click.INT,
     default=None,
     help=RESULT_POINTS_HELP,
 )
 @click.option(
-    "-W", "--won",
+    "-W",
+    "--won",
     type=click.INT,
     default=None,
     help=RESULT_WON_HELP,
 )
 @click.option(
-    "-L", "--lost",
+    "-L",
+    "--lost",
     type=click.INT,
     default=None,
     help=RESULT_LOST_HELP,
 )
 @click.option(
-    "-r", "--remarks",
+    "-r",
+    "--remarks",
     type=click.STRING,
     default=None,
     help=RESULT_REMARKS_HELP,
 )
 @pass_backend
-def update(backend: Backend, series_id: int, player_id: int, points: Optional[int], won: Optional[int],
-           lost: Optional[int], remarks: Optional[str]):
+def update(
+    backend: Backend,
+    series_id: int,
+    player_id: int,
+    points: Optional[int],
+    won: Optional[int],
+    lost: Optional[int],
+    remarks: Optional[str],
+):
     """Update an existing game result in database."""
     try:
         if points is None:
-            points = click.prompt("Points", default=backend.get_result(series_id, player_id)["points"])
+            points = click.prompt(
+                "Points", default=backend.get_result(series_id, player_id)["points"]
+            )
         if won is None:
-            won = click.prompt("Won", default=backend.get_result(series_id, player_id)["won"])
+            won = click.prompt(
+                "Won", default=backend.get_result(series_id, player_id)["won"]
+            )
         if lost is None:
-            remarks = click.prompt("Lost", default=backend.get_result(series_id, player_id)["lost"])
+            remarks = click.prompt(
+                "Lost", default=backend.get_result(series_id, player_id)["lost"]
+            )
         if remarks is None:
-            remarks = click.prompt("Remarks", default=backend.get_result(series_id, player_id)["remarks"])
+            remarks = click.prompt(
+                "Remarks", default=backend.get_result(series_id, player_id)["remarks"]
+            )
 
         backend.update_result(series_id, player_id, points, won, lost, remarks)
     except KeyError:
@@ -126,13 +160,15 @@ def update(backend: Backend, series_id: int, player_id: int, points: Optional[in
 
 @result.command()
 @click.option(
-    "-s", "--series-id",
+    "-s",
+    "--series-id",
     type=click.INT,
     prompt=True,
     help=RESULT_SERIES_ID_HELP,
 )
 @click.option(
-    "-p", "--player-id",
+    "-p",
+    "--player-id",
     type=click.INT,
     prompt=True,
     help=RESULT_PLAYER_ID_HELP,
@@ -148,13 +184,15 @@ def remove(backend: Backend, series_id: int, player_id: int):
 
 @result.command()
 @click.option(
-    "-s", "--series-id",
+    "-s",
+    "--series-id",
     type=click.INT,
     prompt=True,
     help=RESULT_SERIES_ID_HELP,
 )
 @click.option(
-    "-p", "--player-id",
+    "-p",
+    "--player-id",
     type=click.INT,
     prompt=True,
     help=RESULT_PLAYER_ID_HELP,

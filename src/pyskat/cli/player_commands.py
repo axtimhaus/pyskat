@@ -19,13 +19,15 @@ def player():
 
 @player.command()
 @click.option(
-    "-n", "--name",
+    "-n",
+    "--name",
     type=click.STRING,
     prompt=True,
     help=PLAYER_NAME_HELP,
 )
 @click.option(
-    "-r", "--remarks",
+    "-r",
+    "--remarks",
     type=click.STRING,
     prompt=True,
     default="",
@@ -42,19 +44,22 @@ def add(backend: Backend, name: str, remarks: str):
 
 @player.command()
 @click.option(
-    "-i", "--id",
+    "-i",
+    "--id",
     type=click.INT,
     prompt=True,
     help=PLAYER_ID_HELP,
 )
 @click.option(
-    "-n", "--name",
+    "-n",
+    "--name",
     type=click.STRING,
     default=None,
     help=PLAYER_NAME_HELP,
 )
 @click.option(
-    "-r", "--remarks",
+    "-r",
+    "--remarks",
     type=click.STRING,
     default=None,
     help=PLAYER_REMARKS_HELP,
@@ -75,7 +80,8 @@ def update(backend: Backend, id: int, name: Optional[str], remarks: Optional[str
 
 @player.command()
 @click.option(
-    "-i", "--id",
+    "-i",
+    "--id",
     type=click.INT,
     prompt=True,
     help=PLAYER_ID_HELP,
@@ -91,7 +97,8 @@ def remove(backend: Backend, id: int):
 
 @player.command()
 @click.option(
-    "-i", "--id",
+    "-i",
+    "--id",
     type=click.INT,
     prompt=True,
     help=PLAYER_ID_HELP,

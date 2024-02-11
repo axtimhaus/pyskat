@@ -8,15 +8,9 @@ from rich.table import Table
 
 console = get_console()
 
-SUPPRESS_TRACEBACKS = [
-    click
-]
+SUPPRESS_TRACEBACKS = [click]
 
-install(
-    console=console,
-    show_locals=False,
-    suppress=SUPPRESS_TRACEBACKS
-)
+install(console=console, show_locals=False, suppress=SUPPRESS_TRACEBACKS)
 
 
 def print_pandas_dataframe(df: pd.DataFrame, title: Optional[str] = None):
@@ -30,7 +24,9 @@ def print_pandas_dataframe(df: pd.DataFrame, title: Optional[str] = None):
 
     old_index = [None] * df.index.nlevels
     for row in df.itertuples():
-        new_index = [str(e) for e in row[0]] if isinstance(row[0], tuple) else [str(row[0])]
+        new_index = (
+            [str(e) for e in row[0]] if isinstance(row[0], tuple) else [str(row[0])]
+        )
 
         index = [(new if old != new else "") for old, new in zip(old_index, new_index)]
         old_index = new_index

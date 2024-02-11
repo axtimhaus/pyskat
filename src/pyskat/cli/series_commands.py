@@ -40,7 +40,7 @@ pass_current_series = click.make_pass_decorator(CurrentSeries)
 @click.option(
     "--current-series-file",
     type=click.Path(dir_okay=False, path_type=Path),
-    default=APP_DIR / Path("current_series")
+    default=APP_DIR / Path("current_series"),
 )
 @click.pass_context
 def series(ctx: click.Context, current_series_file: Path):
@@ -51,28 +51,32 @@ def series(ctx: click.Context, current_series_file: Path):
 
 @series.command()
 @click.option(
-    "-n", "--name",
+    "-n",
+    "--name",
     type=click.STRING,
     prompt=True,
     default="",
     help=SERIES_NAME_HELP,
 )
 @click.option(
-    "-d", "--date",
+    "-d",
+    "--date",
     type=click.STRING,
     prompt=True,
-    default=datetime.today().strftime('%Y-%m-%d'),
+    default=datetime.today().strftime("%Y-%m-%d"),
     help=SERIES_DATE_HELP,
 )
 @click.option(
-    "-r", "--remarks",
+    "-r",
+    "--remarks",
     type=click.STRING,
     prompt=True,
     default="",
     help=SERIES_REMARKS_HELP,
 )
 @click.option(
-    "-a", "--all-players",
+    "-a",
+    "--all-players",
     type=click.BOOL,
     is_flag=True,
     prompt=True,
@@ -81,7 +85,14 @@ def series(ctx: click.Context, current_series_file: Path):
 )
 @pass_current_series
 @pass_backend
-def add(backend: Backend, current_series: CurrentSeries, name: str, date: str, remarks: str, all_players: bool):
+def add(
+    backend: Backend,
+    current_series: CurrentSeries,
+    name: str,
+    date: str,
+    remarks: str,
+    all_players: bool,
+):
     """Create a new series and set it as current."""
     id = backend.add_series(name, date, remarks)
     current_series.set(id)
@@ -92,7 +103,8 @@ def add(backend: Backend, current_series: CurrentSeries, name: str, date: str, r
 
 @series.command()
 @click.option(
-    "-i", "--id",
+    "-i",
+    "--id",
     type=click.INT,
     prompt=True,
     help=SERIES_ID_HELP,
@@ -106,14 +118,16 @@ def set(backend: Backend, current_series: CurrentSeries, id: int):
 
 @series.command()
 @click.option(
-    "-i", "--series-id",
+    "-i",
+    "--series-id",
     type=click.INT,
     default=None,
     show_default="current series",
     help=SERIES_ID_HELP,
 )
 @click.option(
-    "-a", "--all",
+    "-a",
+    "--all",
     type=click.BOOL,
     default=False,
     is_flag=True,
@@ -125,8 +139,13 @@ def set(backend: Backend, current_series: CurrentSeries, id: int):
 )
 @pass_current_series
 @pass_backend
-def add_players(backend: Backend, current_series: CurrentSeries, series_id: Optional[int], player_ids: list[int],
-                all: bool):
+def add_players(
+    backend: Backend,
+    current_series: CurrentSeries,
+    series_id: Optional[int],
+    player_ids: list[int],
+    all: bool,
+):
     """Add players to a series."""
     if not series_id:
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
@@ -145,14 +164,16 @@ def add_players(backend: Backend, current_series: CurrentSeries, series_id: Opti
 
 @series.command()
 @click.option(
-    "-i", "--series-id",
+    "-i",
+    "--series-id",
     type=click.INT,
     default=None,
     show_default="current series",
     help=SERIES_ID_HELP,
 )
 @click.option(
-    "-a", "--all",
+    "-a",
+    "--all",
     type=click.BOOL,
     default=False,
     is_flag=True,
@@ -164,8 +185,13 @@ def add_players(backend: Backend, current_series: CurrentSeries, series_id: Opti
 )
 @pass_current_series
 @pass_backend
-def remove_players(backend: Backend, current_series: CurrentSeries, series_id: Optional[int], player_ids: list[int],
-                   all: bool):
+def remove_players(
+    backend: Backend,
+    current_series: CurrentSeries,
+    series_id: Optional[int],
+    player_ids: list[int],
+    all: bool,
+):
     """Remove players from a series."""
     if not series_id:
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
@@ -192,7 +218,8 @@ def list(backend: Backend):
 
 @series.command()
 @click.option(
-    "-i", "--series-id",
+    "-i",
+    "--series-id",
     type=click.INT,
     default=None,
     show_default="current series",
@@ -200,7 +227,9 @@ def list(backend: Backend):
 )
 @pass_current_series
 @pass_backend
-def shuffle_players(backend: Backend, current_series: CurrentSeries, series_id: Optional[int]):
+def shuffle_players(
+    backend: Backend, current_series: CurrentSeries, series_id: Optional[int]
+):
     """Generate a random player distribution of players to tables."""
     if not series_id:
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
@@ -208,7 +237,7 @@ def shuffle_players(backend: Backend, current_series: CurrentSeries, series_id: 
     old = backend.list_tables(series_id)
     if not old.empty:
         if not click.confirm(
-                "There is already a player-to-table distribution for this series. Proceeding will overwrite that."
+            "There is already a player-to-table distribution for this series. Proceeding will overwrite that."
         ):
             return
 
