@@ -48,7 +48,7 @@ def backend(tmp_path):
 def test_get_player(backend: Backend):
     result = backend.get_player(5)
 
-    assert result.name == 5
+    assert result["id"] == 5
     assert result["name"] == "P5"
     assert result["remarks"] == "rem"
 
