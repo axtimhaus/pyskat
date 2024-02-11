@@ -122,11 +122,11 @@ def test_update_result(backend: Backend):
 
 def test_remove_result(backend: Backend):
     with pytest.raises(KeyError):
-        backend.remove_result(1,  15)
-    backend.remove_result(1,  6)
+        backend.remove_result(1, 15)
+    backend.remove_result(1, 6)
 
     with pytest.raises(KeyError):
-        backend.get_result(1,  6)
+        backend.get_result(1, 6)
 
 
 def test_list_players(backend: Backend):
@@ -135,17 +135,6 @@ def test_list_players(backend: Backend):
     assert isinstance(result, pd.DataFrame)
     assert np.all(result.index == range(1, 8))
     assert len(result) == 7
-
-
-def test_list_results_for_player(backend: Backend):
-    result = backend.list_results_for_player(5)
-
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 2
-    assert result.get("player_id", None) is None
-
-    with pytest.raises(KeyError):
-        assert backend.list_results_for_player(42)
 
 
 def test_list_results(backend: Backend):
