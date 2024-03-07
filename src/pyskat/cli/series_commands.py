@@ -230,7 +230,5 @@ def shuffle_players(
         ):
             return
 
-    shuffle = backend.shuffle_players_to_tables(series_id)
-    shuffle.set_index(["table_id", "player_id"], inplace=True)
-    shuffle.sort_index(inplace=True)
-    print_pandas_dataframe(shuffle)
+    backend.shuffle_players_to_tables(series_id)
+    print_pandas_dataframe(backend.list_tables(series_id))

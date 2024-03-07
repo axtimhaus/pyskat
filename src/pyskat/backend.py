@@ -26,7 +26,7 @@ def _results_to_dataframe(results: list[Document]):
     if not results:
         return pd.DataFrame(
             columns=["points", "won", "lost"],
-            index=pd.MultiIndex([[], []], names=["series_id", "player_id"]),
+            index=pd.MultiIndex.from_arrays([[], []], names=["series_id", "player_id"]),
         )
 
     df = pd.DataFrame(results)
@@ -50,7 +50,7 @@ def _tables_to_dataframe(tables: list[Document]):
     if not tables:
         return pd.DataFrame(
             columns=["players"],
-            index=pd.MultiIndex([[], []], names=["series_id", "table_id"]),
+            index=pd.MultiIndex.from_arrays([[], []], names=["series_id", "table_id"]),
         )
 
     df = pd.DataFrame(tables)
@@ -379,8 +379,12 @@ class Backend:
 
         player_count = len(shuffled)
         div, mod = divmod(player_count, 4)
-        three_player_table_count = 4 - mod
-        four_player_table_count = div + 1 - three_player_table_count
+        if mod == 0:
+            three_player_table_count = 0
+            four_player_table_count = div
+        else:
+            three_player_table_count = 4 - mod
+            four_player_table_count = div + 1 - three_player_table_count
 
         player_border = four_player_table_count * 4
         tables = [shuffled[i : i + 4].index for i in np.arange(0, player_border, 4)] + [
