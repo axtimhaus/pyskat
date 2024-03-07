@@ -3,12 +3,13 @@ from typing import Optional
 import click
 
 from .main import pass_backend
+from .player_commands import player_id_argument
+from .series_commands import series_id_argument
 from ..backend import Backend
 from ..rich import console, print_pandas_dataframe
 
 RESULT_PLAYER_ID_HELP = "ID of the player."
 RESULT_SERIES_ID_HELP = "ID of the series."
-RESULT_TABLE_ID_HELP = "ID of the table."
 RESULT_POINTS_HELP = "Sum of points from game values."
 RESULT_WON_HELP = "Count of won games."
 RESULT_LOST_HELP = "Count of lost games."
@@ -22,173 +23,139 @@ def result():
 
 
 @result.command()
+@player_id_argument
+@series_id_argument
 @click.option(
-    "-s", "--series-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_SERIES_ID_HELP,
-)
-@click.option(
-    "-t", "--table-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_TABLE_ID_HELP,
-)
-@click.option(
-    "-p", "--player-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_PLAYER_ID_HELP,
-)
-@click.option(
-    "-P", "--points",
+    "-p",
+    "--points",
     type=click.INT,
     prompt=True,
     help=RESULT_POINTS_HELP,
 )
 @click.option(
-    "-W", "--won",
+    "-w",
+    "--won",
     type=click.INT,
     prompt=True,
     help=RESULT_WON_HELP,
 )
 @click.option(
-    "-L", "--lost",
+    "-l",
+    "--lost",
     type=click.INT,
     prompt=True,
     help=RESULT_LOST_HELP,
 )
 @click.option(
-    "-r", "--remarks",
+    "-r",
+    "--remarks",
     type=click.STRING,
     prompt=True,
     default="",
     help=RESULT_REMARKS_HELP,
 )
 @pass_backend
-def add(backend: Backend, series_id: int, table_id: int, player_id: int, points: int, won: int, lost: int,
-        remarks: str):
+def add(
+    backend: Backend,
+    series_id: int,
+    player_id: int,
+    points: int,
+    won: int,
+    lost: int,
+    remarks: str,
+):
     """Add a new game result to database."""
     try:
-        backend.add_result(series_id, table_id, player_id, points, won, lost, remarks)
+        backend.add_result(series_id, player_id, points, won, lost, remarks)
     except KeyError:
         console.print_exception()
 
 
 @result.command()
+@player_id_argument
+@series_id_argument
 @click.option(
-    "-s", "--series-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_SERIES_ID_HELP,
-)
-@click.option(
-    "-t", "--table-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_TABLE_ID_HELP,
-)
-@click.option(
-    "-p", "--player-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_PLAYER_ID_HELP,
-)
-@click.option(
-    "-P", "--points",
+    "-p",
+    "--points",
     type=click.INT,
     default=None,
     help=RESULT_POINTS_HELP,
 )
 @click.option(
-    "-W", "--won",
+    "-w",
+    "--won",
     type=click.INT,
     default=None,
     help=RESULT_WON_HELP,
 )
 @click.option(
-    "-L", "--lost",
+    "-l",
+    "--lost",
     type=click.INT,
     default=None,
     help=RESULT_LOST_HELP,
 )
 @click.option(
-    "-r", "--remarks",
+    "-r",
+    "--remarks",
     type=click.STRING,
     default=None,
     help=RESULT_REMARKS_HELP,
 )
 @pass_backend
-def update(backend: Backend, series_id: int, table_id: int, player_id: int, points: Optional[int], won: Optional[int],
-           lost: Optional[int], remarks: Optional[str]):
+def update(
+    backend: Backend,
+    series_id: int,
+    player_id: int,
+    points: Optional[int],
+    won: Optional[int],
+    lost: Optional[int],
+    remarks: Optional[str],
+):
     """Update an existing game result in database."""
     try:
         if points is None:
-            points = click.prompt("Points", default=backend.get_result(series_id, table_id, player_id)["points"])
+            points = click.prompt(
+                "Points", default=backend.get_result(series_id, player_id)["points"]
+            )
         if won is None:
-            won = click.prompt("Won", default=backend.get_result(series_id, table_id, player_id)["won"])
+            won = click.prompt(
+                "Won", default=backend.get_result(series_id, player_id)["won"]
+            )
         if lost is None:
-            remarks = click.prompt("Lost", default=backend.get_result(series_id, table_id, player_id)["lost"])
+            remarks = click.prompt(
+                "Lost", default=backend.get_result(series_id, player_id)["lost"]
+            )
         if remarks is None:
-            remarks = click.prompt("Remarks", default=backend.get_result(series_id, table_id, player_id)["remarks"])
+            remarks = click.prompt(
+                "Remarks", default=backend.get_result(series_id, player_id)["remarks"]
+            )
 
-        backend.update_result(series_id, table_id, player_id, points, won, lost, remarks)
+        backend.update_result(series_id, player_id, points, won, lost, remarks)
     except KeyError:
         console.print_exception()
 
 
 @result.command()
-@click.option(
-    "-s", "--series-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_SERIES_ID_HELP,
-)
-@click.option(
-    "-t", "--table-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_TABLE_ID_HELP,
-)
-@click.option(
-    "-p", "--player-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_PLAYER_ID_HELP,
-)
+@player_id_argument
+@series_id_argument
 @pass_backend
-def remove(backend: Backend, series_id: int, table_id: int, player_id: int):
+def remove(backend: Backend, series_id: int, player_id: int):
     """Remove a game result from database."""
     try:
-        backend.remove_result(series_id, table_id, player_id)
+        backend.remove_result(series_id, player_id)
     except KeyError:
         console.print_exception()
 
 
 @result.command()
-@click.option(
-    "-s", "--series-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_SERIES_ID_HELP,
-)
-@click.option(
-    "-t", "--table-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_TABLE_ID_HELP,
-)
-@click.option(
-    "-p", "--player-id",
-    type=click.INT,
-    prompt=True,
-    help=RESULT_PLAYER_ID_HELP,
-)
+@player_id_argument
+@series_id_argument
 @pass_backend
-def get(backend: Backend, series_id: int, table_id: int, player_id: int):
+def get(backend: Backend, series_id: int, player_id: int):
     """Get a game result from database."""
     try:
-        p = backend.get_result(series_id, table_id, player_id)
+        p = backend.get_result(series_id, player_id)
 
         console.print(p)
     except KeyError:
