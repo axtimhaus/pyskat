@@ -26,21 +26,21 @@ def result():
 @player_id_argument
 @series_id_argument
 @click.option(
-    "-P",
+    "-p",
     "--points",
     type=click.INT,
     prompt=True,
     help=RESULT_POINTS_HELP,
 )
 @click.option(
-    "-W",
+    "-w",
     "--won",
     type=click.INT,
     prompt=True,
     help=RESULT_WON_HELP,
 )
 @click.option(
-    "-L",
+    "-l",
     "--lost",
     type=click.INT,
     prompt=True,
@@ -75,21 +75,21 @@ def add(
 @player_id_argument
 @series_id_argument
 @click.option(
-    "-P",
+    "-p",
     "--points",
     type=click.INT,
     default=None,
     help=RESULT_POINTS_HELP,
 )
 @click.option(
-    "-W",
+    "-w",
     "--won",
     type=click.INT,
     default=None,
     help=RESULT_WON_HELP,
 )
 @click.option(
-    "-L",
+    "-l",
     "--lost",
     type=click.INT,
     default=None,
