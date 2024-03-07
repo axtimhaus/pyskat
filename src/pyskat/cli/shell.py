@@ -15,8 +15,7 @@ DEFAULT_HISTORY_FILE = APP_DIR / "shell_history"
     "--history-file",
     help="File to read/write the shell history to.",
     type=click.Path(dir_okay=False, path_type=Path),
-    default=DEFAULT_HISTORY_FILE,
-    show_default=True,
+    default=DEFAULT_HISTORY_FILE, show_default=True
 )
 @click.pass_context
 def shell(ctx, history_file: Path):
@@ -36,13 +35,12 @@ def shell(ctx, history_file: Path):
         "specify them when launching `pyskat shell`.\n\n"
         "Type [b]--help[/b] for help on available subcommands.\n"
         "Type [b]exit[/b] to leave the shell.",
-        highlight=False,
+        highlight=False
     )
 
     from prompt_toolkit.history import FileHistory
-
     prompt_kwargs = dict(
         history=FileHistory(str(history_file.resolve())),
-        message=[("bold", "\npyskat ")],
+        message=[("bold", "\npyskat ")]
     )
     click_repl.repl(ctx, prompt_kwargs=prompt_kwargs)

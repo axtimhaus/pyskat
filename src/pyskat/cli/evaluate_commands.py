@@ -15,19 +15,17 @@ def evaluate():
 
 @evaluate.command()
 @click.option(
-    "-s",
-    "--sort-by",
+    "-s", "--sort-by",
     type=click.STRING,
     default=None,
-    help="Column key to sort results by.",
+    help="Column key to sort results by."
 )
 @click.option(
-    "-r",
-    "--reverse",
+    "-r", "--reverse",
     type=click.BOOL,
     default=False,
     is_flag=True,
-    help="Sort in reverse order.",
+    help="Sort in reverse order."
 )
 @pass_backend
 def results(backend: Backend, sort_by: Optional[str], reverse: bool):
@@ -42,19 +40,17 @@ def results(backend: Backend, sort_by: Optional[str], reverse: bool):
 
 @evaluate.command()
 @click.option(
-    "-s",
-    "--sort-by",
+    "-s", "--sort-by",
     type=click.STRING,
     default=None,
-    help="Column key to sort results by.",
+    help="Column key to sort results by."
 )
 @click.option(
-    "-r",
-    "--reverse",
+    "-r", "--reverse",
     type=click.BOOL,
     default=False,
     is_flag=True,
-    help="Sort in reverse order.",
+    help="Sort in reverse order."
 )
 @pass_backend
 def total(backend: Backend, sort_by: Optional[str], reverse: bool):
@@ -70,9 +66,7 @@ def total(backend: Backend, sort_by: Optional[str], reverse: bool):
             else:
                 title = None
 
-            print_pandas_dataframe(
-                evaluation[ind].sort_values(sort_by, ascending=reverse), title
-            )
+            print_pandas_dataframe(evaluation[ind].sort_values(sort_by, ascending=reverse), title)
             console.print()
     except KeyError:
         console.print_exception()

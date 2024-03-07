@@ -47,8 +47,5 @@ packages = ["src/pyskat"]
 
 [tool.hatch.envs.default]
 path = ".venv"
-dependencies = [
-    "pytest",
-    "black",
-]
+dependencies = ["pytest"]
 
