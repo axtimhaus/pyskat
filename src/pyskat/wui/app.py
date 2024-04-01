@@ -1,9 +1,9 @@
-from collections import namedtuple
 from dataclasses import dataclass
 
 from flask import Flask
 
 app = Flask("pyskat.wui")
+app.secret_key = "abc"
 
 
 @dataclass
