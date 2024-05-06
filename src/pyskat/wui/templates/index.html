@@ -3,18 +3,4 @@
 {% block head %}{% endblock %}
 {% block content %}
     <h1>Home</h1>
-
-    <form>
-        <fieldset>
-            <div>
-                <label for="database-file" class="form-label mt-4">Choose database file</label>
-                <select class="form-select" id="database-file" name="database-file">
-                    {% for file in database_files %}
-                        <option {% if current_database_file == file %} selected{% endif %}>{{ file }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary" formmethod="post">Load</button>
-        </fieldset>
-    </form>
 {% endblock %}

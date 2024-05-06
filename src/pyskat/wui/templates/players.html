@@ -3,7 +3,67 @@
 {% block head %}{% endblock %}
 {% block content %}
     <h1>Players</h1>
-    <p class="important">
-      Welcome to my awesome homepage.
-    </p>
+
+    <form>
+        <div class="mb-3 row">
+            <div class="col-3 col-md-2 col-lg-1">
+                <div class="form-floating">
+                    <input disabled class="form-control" type="text" id="id" name="id" placeholder="id"
+                           value="{% if edit_player %}{{ edit_player.id }}{% else %}new{% endif %}"/>
+                    <label class="form-label" for="id">ID</label>
+                </div>
+            </div>
+            <div class="col-9 col-md-10 col-lg-11">
+                <div class="form-floating">
+                    <input class="form-control" type="text" id="name" name="name" placeholder="name"
+                           value="{% if edit_player %}{{ edit_player.name }}{% endif %}"/>
+                    <label class="form-label" for="name">Name</label>
+                </div>
+            </div>
+        </div>
+        <div class="mb-3 form-floating">
+            <input class="form-control" type="text" id="remarks" name="remarks" placeholder="remarks"
+                   value="{% if edit_player %}{{ edit_player.remarks }}{% endif %}"/>
+            <label class="form-label" for="remarks">Remarks</label>
+        </div>
+        {% if edit_player %}
+            <button class="btn btn-success" formmethod="post" type="submit">Save Changes</button>
+            <a class="btn btn-secondary" href="/players">Cancel</a>
+        {% else %}
+            <button class="btn btn-success" formmethod="post" type="submit">Add Player</button>
+        {% endif %}
+    </form>
+    <div class="mt-6">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Remarks</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for p in players %}
+                <tr>
+                    <th>
+                        {{ p.Index }}
+                    </th>
+                    <th>
+                        {{ p.name }}
+                    </th>
+                    <th>
+                        {{ p.remarks }}
+                    </th>
+                    <th>
+                        <div class="btn-group">
+                            <a href="/players?edit={{ p.Index }}" class="btn btn-warning">Edit</a>
+                            <a href="/players?remove={{ p.Index }}" class="btn btn-danger">Delete</a>
+                        </div>
+                    </th>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% endblock %}
