@@ -1,6 +1,7 @@
 from .app import app
 from . import index
 from . import players
+from . import series
 
 
 def run_wui():

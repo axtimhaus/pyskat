@@ -22,13 +22,19 @@ def players():
             )
 
     if edit_id:
-        edit_player = backend.get_player(edit_id)
+        try:
+            edit_player = backend.get_player(edit_id)
+        except KeyError:
+            edit_player = None
     else:
         edit_player = None
 
     remove_id = request.args.get("remove", None)
     if remove_id:
-        backend.remove_player(int(remove_id))
+        try:
+            backend.remove_player(int(remove_id))
+        except KeyError:
+            pass
 
     players_list = backend.list_players().itertuples()
 
