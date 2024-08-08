@@ -84,6 +84,51 @@ class SeriesTable:
         series = [Series(id=r.doc_id, **r) for r in result]
         return series
 
+    def _modify_players(self, series_id: int, action) -> Series:
+        original = self._table.get(doc_id=series_id)
+
+        if not original:
+            raise_series_not_found(series_id)
+
+        action(original["player_ids"])
+        series = Series(id=series_id, **original)
+        self._table.update(series.model_dump(mode="json", exclude={"id"}), doc_ids=[series_id])
+        return series
+
+    def add_player(self, series_id: int, player_id: int) -> Series:
+        """Add a player to a series."""
+        return self._modify_players(series_id, lambda ls: ls.append(player_id))
+
+    def remove_player(self, series_id: int, player_id: int) -> Series:
+        """Remove a player from a series."""
+        return self._modify_players(series_id, lambda ls: ls.remove(player_id))
+
+    def add_players(self, series_id: int, player_ids: list[int]):
+        """Add players to a series."""
+        return self._modify_players(series_id, lambda ls: ls.extend(player_ids))
+
+    def remove_players(self, series_id: int, player_ids: list[int]):
+        """Remove players from a series."""
+
+        def fun(ls: list):
+            for i in player_ids:
+                ls.remove(i)
+
+        return self._modify_players(series_id, fun)
+
+    def clear_players(self, series_id: int):
+        """Remove all players from a series."""
+        return self._modify_players(series_id, lambda ls: ls.clear())
+
+    def all_players(self, series_id: int):
+        """Remove all players from a series."""
+        def fun(ls: list):
+            ls.clear()
+            players = [p.id for p in self._backend.players.all()]
+            ls.extend(players)
+
+        return self._modify_players(series_id, fun)
+
 
 def raise_series_not_found(id: int):
     raise KeyError(f"A series with the given ID {id} was not found.")

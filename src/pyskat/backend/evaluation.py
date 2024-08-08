@@ -16,13 +16,9 @@ def evaluate_results(backend: Backend) -> pd.DataFrame:
     df["won_points"] = df["won"] * 50
     df["lost_points"] = -df["lost"] * 50
 
-    df["table_size"] = df.apply(
-        lambda row: backend.tables.get_table_with_player(*row.name).size, axis=1
-    )
+    df["table_size"] = df.apply(lambda row: backend.tables.get_table_with_player(*row.name).size, axis=1)
 
-    df["opponents_lost"] = df.apply(
-        lambda row: backend.results.get_opponents_lost(*row.name), axis=1
-    )
+    df["opponents_lost"] = df.apply(lambda row: backend.results.get_opponents_lost(*row.name), axis=1)
 
     def calc_opponents_lost_points(row):
         if row["table_size"] == 4:

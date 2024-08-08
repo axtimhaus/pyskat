@@ -1,3 +1,4 @@
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -172,33 +173,53 @@ def test_shuffle_players_to_tables(backend: Backend):
 
 
 def test_update_series(backend: Backend):
-    backend.update_series(1, name="abc")
-    assert backend.get_series(1)["name"] == "abc"
-    assert backend.get_series(1)["date"] == "2024-02-04"
+    backend.series.update(1, name="abc")
+    assert backend.series.get(1).name == "abc"
+    assert backend.series.get(1).date == datetime.fromisoformat("2024-02-04")
 
-    backend.update_series(1, date="today")
-    assert backend.get_series(1)["name"] == "abc"
-    assert backend.get_series(1)["date"] == "today"
+    today = datetime.today()
+    backend.series.update(1, date=today)
+    assert backend.series.get(1).name == "abc"
+    assert backend.series.get(1).date == today
 
 
 def test_remove_series(backend: Backend):
     with pytest.raises(KeyError):
-        backend.remove_series(42)
-    backend.remove_series(1)
+        backend.series.remove(42)
+    backend.series.remove(1)
 
     with pytest.raises(KeyError):
-        backend.get_series(1)
+        backend.series.get(1)
 
 
 def test_add_players_to_series_all(backend: Backend):
-    backend.add_players_to_series(1, "all")
+    backend.series.all_players(1)
+    series = backend.series.get(1)
+    assert series.player_ids == list(range(1, 8))
 
-    series = backend.get_series(1)
-    assert series["players"] == list(range(1, 8))
+    backend.series.clear_players(1)
+    series = backend.series.get(1)
+    assert series.player_ids == list()
 
 
 def test_add_players_to_series_ids(backend: Backend):
-    backend.add_players_to_series(1, [1, 4, 6])
+    backend.series.add_players(1, [1, 4, 6])
+    series = backend.series.get(1)
+    assert series.player_ids == [1, 4, 6]
 
-    series = backend.get_series(1)
-    assert series["players"] == [1, 4, 6]
+    backend.series.remove_players(1, [4, 6])
+    series = backend.series.get(1)
+    assert series.player_ids == [1]
+
+def test_add_players_to_series_single(backend: Backend):
+    backend.series.add_player(1, 1)
+    series = backend.series.get(1)
+    assert series.player_ids == [1]
+
+    backend.series.add_player(1, 4)
+    series = backend.series.get(1)
+    assert series.player_ids == [1, 4]
+
+    backend.series.remove_player(1, 1)
+    series = backend.series.get(1)
+    assert series.player_ids == [4]
