@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 class Player(BaseModel):
     id: int = Field(ge=0)
     name: str
-    remarks: int = Field(default="")
+    remarks: str = Field(default="")
 
 
 class Table(BaseModel):
@@ -16,6 +16,7 @@ class Table(BaseModel):
     player2_id: int = Field(ge=0)
     player3_id: int = Field(ge=0)
     player4_id: int = Field(ge=0)
+    remarks: str = Field(default="")
 
     @property
     def player_ids(self) -> list[int]:
@@ -38,7 +39,7 @@ class Series(BaseModel):
     id: int = Field(ge=0)
     name: str = Field(default="")
     date: datetime
-    remarks: int = Field(default="")
+    remarks: str = Field(default="")
     player_ids: list[int]
 
 

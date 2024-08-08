@@ -1,6 +1,6 @@
 def filter_none_values(a_dict: dict):
     """Removes all entries from dict whose value is None."""
-    return {k: v for k, v in a_dict if v is not None}
+    return {k: v for k, v in a_dict.items() if v is not None}
 
 
 def update_if_not_none(base: dict, **kwargs):

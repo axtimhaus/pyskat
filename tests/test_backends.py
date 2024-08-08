@@ -1,147 +1,143 @@
-import numpy as np
 
+import numpy as np
 import pandas as pd
 import pytest
-import tempfile
+from tinydb import Query
 
-from pyskat.backend import Backend, Player, Table
+from pyskat.backend import Backend
+from pyskat.backend.evaluation import evaluate_results, evaluate_total
 
 
 @pytest.fixture
 def backend(tmp_path):
     backend = Backend(tmp_path / "db.json")
 
-    backend.add_player("P1")
-    backend.add_player("P2")
-    backend.add_player("P3")
-    backend.add_player("P4")
-    backend.add_player("P5", "rem")
-    backend.add_player("P6")
-    backend.add_player("P7")
+    backend.players.add("P1")
+    backend.players.add("P2")
+    backend.players.add("P3")
+    backend.players.add("P4")
+    backend.players.add("P5", "rem")
+    backend.players.add("P6")
+    backend.players.add("P7")
 
-    backend.add_result(1, 6, 50, 7, 3)
-    backend.add_result(1, 3, 450, 5, 1)
-    backend.add_result(1, 4, 250, 2, 2)
-    backend.add_result(1, 1, 100, 3, 2)
-    backend.add_result(1, 5, 700, 3, 1)
-    backend.add_result(2, 1, 500, 1, 2)
-    backend.add_result(1, 2, 200, 3, 4)
-    backend.add_result(1, 7, 350, 2, 1)
-    backend.add_result(2, 7, 200, 4, 2)
-    backend.add_result(2, 2, 300, 4, 5)
-    backend.add_result(2, 3, 730, 9, 4)
-    backend.add_result(2, 5, 440, 5, 1)
-    backend.add_result(2, 6, 240, 2, 0)
-    backend.add_result(2, 4, 100, 2, 0)
+    backend.results.add(1, 6, 50, 7, 3)
+    backend.results.add(1, 3, 450, 5, 1)
+    backend.results.add(1, 4, 250, 2, 2)
+    backend.results.add(1, 1, 100, 3, 2)
+    backend.results.add(1, 5, 700, 3, 1)
+    backend.results.add(2, 1, 500, 1, 2)
+    backend.results.add(1, 2, 200, 3, 4)
+    backend.results.add(1, 7, 350, 2, 1)
+    backend.results.add(2, 7, 200, 4, 2)
+    backend.results.add(2, 2, 300, 4, 5)
+    backend.results.add(2, 3, 730, 9, 4)
+    backend.results.add(2, 5, 440, 5, 1)
+    backend.results.add(2, 6, 240, 2, 0)
+    backend.results.add(2, 4, 100, 2, 0)
 
-    backend.add_table(1, 1, [2, 4, 6, 7])
-    backend.add_table(1, 2, [1, 3, 5])
-    backend.add_table(2, 1, [1, 3, 4, 7])
-    backend.add_table(2, 2, [2, 5, 6])
+    backend.tables.add(1, 1, 2, 4, 6, 7)
+    backend.tables.add(1, 2, 1, 3, 5)
+    backend.tables.add(2, 1, 1, 3, 4, 7)
+    backend.tables.add(2, 2, 2, 5, 6)
 
-    backend.add_series("Nr1", "2024-02-04", "")
-    backend.add_series("Nr2", "2024-02-05", "")
+    backend.series.add("Nr1", "2024-02-04", "")
+    backend.series.add("Nr2", "2024-02-05", "")
 
     return backend
 
 
 def test_get_player(backend: Backend):
-    result = backend.get_player(5)
+    result = backend.players.get(5)
 
-    assert result["id"] == 5
-    assert result["name"] == "P5"
-    assert result["remarks"] == "rem"
+    assert result.id == 5
+    assert result.name == "P5"
+    assert result.remarks == "rem"
 
     with pytest.raises(KeyError):
-        backend.get_player(42)
+        backend.players.get(42)
 
 
 def test_update_player(backend: Backend):
     with pytest.raises(KeyError):
-        backend.update_player(634)
+        backend.players.update(634)
 
-    backend.update_player(1, "new")
-    assert backend.get_player(1)["name"] == "new"
+    backend.players.update(1, "new")
+    assert backend.players.get(1).name == "new"
 
-    backend.update_player(1, remarks="rem")
-    assert backend.get_player(1)["name"] == "new"
-    assert backend.get_player(1)["remarks"] == "rem"
+    backend.players.update(1, remarks="rem")
+    assert backend.players.get(1).name == "new"
+    assert backend.players.get(1).remarks == "rem"
 
 
 def test_remove_player(backend: Backend):
     with pytest.raises(KeyError):
-        backend.remove_player(42)
-    backend.remove_player(1)
+        backend.players.remove(42)
+    backend.players.remove(1)
 
     with pytest.raises(KeyError):
-        backend.get_player(1)
+        backend.players.get(1)
 
 
 def test_query_players(backend: Backend):
-    result = backend.query_players(Player.name == "P5").iloc[0]
-    assert result.name == 5
+    q = Query()
+    result = backend.players.query(q.name == "P5")[0]
+    assert result.id == 5
 
-    result = backend.query_players(Player.name.search("P"))
+    result = backend.players.query(q.name.search("P"))
     assert len(result) == 7
 
-    result = backend.query_players(Player.name == "abc")
+    result = backend.players.query(q.name == "abc")
     assert len(result) == 0
-    assert result.index.name == "id"
-    assert all(result.columns == ["name", "remarks"])
 
 
 def test_get_result(backend: Backend):
-    result = backend.get_result(1, 6)
+    result = backend.results.get(1, 6)
 
-    assert result["points"] == 50
-    assert result["won"] == 7
-    assert result["lost"] == 3
+    assert result.points == 50
+    assert result.won == 7
+    assert result.lost == 3
 
 
 def test_update_result(backend: Backend):
     with pytest.raises(KeyError):
-        backend.add_result(1, 6, 100, 1, 1)
+        backend.results.add(1, 6, 100, 1, 1)
 
-    backend.update_result(1, 6, 150)
-    assert backend.get_result(1, 6)["points"] == 150
+    backend.results.update(1, 6, 150)
+    assert backend.results.get(1, 6).points == 150
 
-    backend.update_result(1, 6, won=1)
-    assert backend.get_result(1, 6)["points"] == 150
-    assert backend.get_result(1, 6)["won"] == 1
+    backend.results.update(1, 6, won=1)
+    assert backend.results.get(1, 6).points == 150
+    assert backend.results.get(1, 6).won == 1
 
 
 def test_remove_result(backend: Backend):
     with pytest.raises(KeyError):
-        backend.remove_result(1, 15)
-    backend.remove_result(1, 6)
+        backend.results.remove(1, 15)
+    backend.results.remove(1, 6)
 
     with pytest.raises(KeyError):
-        backend.get_result(1, 6)
+        backend.results.get(1, 6)
 
 
 def test_list_players(backend: Backend):
-    result = backend.list_players()
+    result = backend.players.all()
 
-    assert isinstance(result, pd.DataFrame)
-    assert np.all(result.index == range(1, 8))
     assert len(result) == 7
 
 
 def test_list_results(backend: Backend):
-    result = backend.list_results()
+    result = backend.results.all()
 
-    assert isinstance(result, pd.DataFrame)
     assert len(result) == 14
-    assert result.loc[2, 3].points == 730
 
 
 def test_get_opponents_lost(backend: Backend):
-    result = backend.get_opponents_lost(1, 2)
+    result = backend.results.get_opponents_lost(1, 2)
     assert result == 6
 
 
 def test_evaluate_results(backend: Backend):
-    result = backend.evaluate_results()
+    result = evaluate_results(backend)
 
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 14
@@ -152,7 +148,7 @@ def test_evaluate_results(backend: Backend):
 
 
 def test_evaluate_total(backend: Backend):
-    result = backend.evaluate_total()
+    result = evaluate_total(backend)
 
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 7

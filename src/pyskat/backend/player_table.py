@@ -16,8 +16,8 @@ class PlayersTable:
         remarks: str | None = None,
     ) -> Player:
         """Add a new player to the database."""
-        player = Player(id=0, name=name, remarks=remarks)
-        player.id = self._table.insert(player.model_dump())
+        player = Player(id=0, name=name, remarks=remarks or "")
+        player.id = self._table.insert(player.model_dump(mode="json", exclude={"id"}))
         return player
 
     def update(
@@ -37,9 +37,9 @@ class PlayersTable:
             name=name,
             remarks=remarks,
         )
-        player = Player(**updated)
+        player = Player(id=id, **updated)
 
-        self._table.update(player.model_dump(), doc_ids=[id])
+        self._table.update(player.model_dump(mode="json", exclude={"id"}), doc_ids=[id])
         return player
 
     def remove(self, id: int) -> None:

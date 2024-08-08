@@ -25,9 +25,9 @@ class SeriesTable:
             name=name,
             date=date,
             player_ids=player_ids or [],
-            remarks=remarks,
+            remarks=remarks or "",
         )
-        series.id = self._table.insert(series.model_dump())
+        series.id = self._table.insert(series.model_dump(mode="json", exclude={"id"}))
         return series
 
     def update(
@@ -51,9 +51,9 @@ class SeriesTable:
             player_ids=player_ids,
             remarks=remarks,
         )
-        series = Series(**updated)
+        series = Series(id=id, **updated)
 
-        self._table.update(series.model_dump(), doc_ids=[id])
+        self._table.update(series.model_dump(mode="json", exclude={"id"}), doc_ids=[id])
         return series
 
     def remove(self, id: int) -> None:

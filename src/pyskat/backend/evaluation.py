@@ -17,11 +17,11 @@ def evaluate_results(backend: Backend) -> pd.DataFrame:
     df["lost_points"] = -df["lost"] * 50
 
     df["table_size"] = df.apply(
-        lambda row: backend.tables.get_table_with_player(row.index.series_id, row.index.player_id).size, axis=1
+        lambda row: backend.tables.get_table_with_player(*row.name).size, axis=1
     )
 
     df["opponents_lost"] = df.apply(
-        lambda row: backend.results.get_opponents_lost(row.index.series_id, row.index.player_id), axis=1
+        lambda row: backend.results.get_opponents_lost(*row.name), axis=1
     )
 
     def calc_opponents_lost_points(row):

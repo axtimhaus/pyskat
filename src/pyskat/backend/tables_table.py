@@ -26,12 +26,11 @@ class TablesTable:
         player1_id: int,
         player2_id: int,
         player3_id: int,
-        player4_id: int,
-        remarks: str | None = None,
+        player4_id: int = 0,
+        remarks: str | None = None or "",
     ) -> Table:
         """Add a new table to the database."""
         table = Table(
-            id=self.make_id(series_id, table_id),
             series_id=series_id,
             table_id=table_id,
             player1_id=player1_id,
@@ -40,7 +39,7 @@ class TablesTable:
             player4_id=player4_id,
             remarks=remarks,
         )
-        self._table.insert(Document(table.model_dump(), table.id))
+        self._table.insert(Document(table.model_dump(mode="json"), self.make_id(series_id, table_id)))
         return table
 
     def update(
@@ -70,7 +69,7 @@ class TablesTable:
         )
         table = Table(**updated)
 
-        self._table.update(table.model_dump(), doc_ids=[id])
+        self._table.update(table.model_dump(mode="json"), doc_ids=[id])
         return table
 
     def remove(
@@ -117,12 +116,20 @@ class TablesTable:
 
     def get_table_with_player(self, series_id: int, player_id: int) -> Table:
         q = Query()
-        table = self._table.get((q.series_id == series_id) & (q.players.test(lambda t: player_id in t)))
+        table = self._table.get(
+            (q.series_id == series_id)
+            & (
+                (q.player1_id == player_id)
+                | (q.player2_id == player_id)
+                | (q.player3_id == player_id)
+                | (q.player4_id == player_id)
+            )
+        )
 
         if not table:
             raise ValueError(f"A table with player {player_id} is not present in series {series_id}.")
 
-        return table
+        return Table(**table)
 
 
 def raise_table_not_found(series_id: int, table_id: int):

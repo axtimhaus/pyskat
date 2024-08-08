@@ -3,7 +3,7 @@ from tinydb.queries import QueryLike
 from tinydb.table import Document
 
 from .backend import Backend
-from .data_model import TableResult
+from .data_model import TableResult, Table
 from .helpers import update_if_not_none
 
 
@@ -31,15 +31,14 @@ class TableResultsTable:
     ) -> TableResult:
         """Add a new result to the database."""
         result = TableResult(
-            id=self.make_id(series_id, player_id),
             series_id=series_id,
             player_id=player_id,
             points=points,
             won=won,
             lost=lost,
-            remarks=remarks,
+            remarks=remarks or "",
         )
-        self._table.insert(Document(result.model_dump(), result.id))
+        self._table.insert(Document(result.model_dump(mode="json"), self.make_id(series_id, player_id)))
         return result
 
     def update(
@@ -56,7 +55,7 @@ class TableResultsTable:
         original = self._table.get(doc_id=id)
 
         if not original:
-            raise_result_not_found(id)
+            raise_result_not_found(series_id, player_id)
 
         updated = update_if_not_none(
             original,
@@ -67,7 +66,7 @@ class TableResultsTable:
         )
         result = TableResult(**updated)
 
-        self._table.update(result.model_dump(), doc_ids=[id])
+        self._table.update(result.model_dump(mode="json"), doc_ids=[id])
         return result
 
     def remove(
@@ -79,7 +78,7 @@ class TableResultsTable:
         id = self.make_id(series_id, player_id)
         result = self._table.remove(doc_ids=[id])
         if not result:
-            raise_result_not_found(id)
+            raise_result_not_found(series_id, player_id)
 
     def get(
         self,
@@ -91,7 +90,7 @@ class TableResultsTable:
         result = self._table.get(doc_id=id)
 
         if not result:
-            raise_result_not_found(id)
+            raise_result_not_found(series_id, player_id)
 
         result = TableResult(id=id, **result)
         return result
@@ -112,7 +111,7 @@ class TableResultsTable:
         table = self._backend.tables.get_table_with_player(series_id, player_id)
         other_players = table.player_ids
         other_players.remove(player_id)
-        others_lost = [self._table.get(series_id, p).lost for p in other_players]
+        others_lost = [self.get(series_id, p).lost for p in other_players]
 
         return sum(others_lost)
 
