@@ -161,15 +161,15 @@ def test_evaluate_total(backend: Backend):
 
 def test_shuffle_players_to_tables(backend: Backend):
     with pytest.raises(ValueError):
-        backend.shuffle_players_to_tables(1)
+        backend.tables.shuffle_players_for_series(1)
 
-    backend.add_players_to_series(1, "all")
-    backend.shuffle_players_to_tables(1)
+    backend.series.all_players(1)
+    backend.tables.shuffle_players_for_series(1)
 
-    assert len(backend.get_table(1, 1)["players"]) == 4
-    assert len(backend.get_table(1, 2)["players"]) == 3
+    assert len(backend.tables.get(1, 1).player_ids) == 4
+    assert len(backend.tables.get(1, 2).player_ids) == 3
 
-    assert len(backend.list_tables(1)) == 2
+    assert len(backend.tables.all_for_series(1)) == 2
 
 
 def test_update_series(backend: Backend):

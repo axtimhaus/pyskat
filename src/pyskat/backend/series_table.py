@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import numpy as np
+import pandas as pd
 from tinydb.queries import QueryLike
 
 from .backend import Backend
@@ -122,6 +124,7 @@ class SeriesTable:
 
     def all_players(self, series_id: int):
         """Remove all players from a series."""
+
         def fun(ls: list):
             ls.clear()
             players = [p.id for p in self._backend.players.all()]

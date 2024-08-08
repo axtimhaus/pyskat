@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 from tinydb.queries import Query, QueryLike
 from tinydb.table import Document
 
@@ -110,9 +112,42 @@ class TablesTable:
         tables = [Table(id=p.doc_id, **p) for p in table]
         return tables
 
+    def all_for_series(self, series_id: int) -> list[Table]:
+        """Get all the tables for a defined series in the database."""
+        tables = self._table.search(Query().series_id == series_id)
+        tables = [Table(id=p.doc_id, **p) for p in tables]
+        return tables
+
     def clear_for_series(self, series_id: int) -> None:
         """Remove all the tables for a defined series in the database."""
         self._table.remove(Query().series_id == series_id)
+
+    def shuffle_players_for_series(self, series_id: int):
+        player_ids = self._backend.series.get(series_id).player_ids
+
+        if not player_ids:
+            raise ValueError("This series has no players assigned.")
+
+        players = pd.Series(player_ids)
+        shuffled = players.sample(frac=1)
+
+        player_count = len(shuffled)
+        div, mod = divmod(player_count, 4)
+        if mod == 0:
+            three_player_table_count = 0
+            four_player_table_count = div
+        else:
+            three_player_table_count = 4 - mod
+            four_player_table_count = div + 1 - three_player_table_count
+
+        player_border = four_player_table_count * 4
+        tables = [shuffled[i : i + 4] for i in np.arange(0, player_border, 4)] + [
+            shuffled[i : i + 3] for i in player_border + np.arange(0, three_player_table_count * 3, 4)
+        ]
+
+        self.clear_for_series(series_id)
+        for i, ps in enumerate(tables, 1):
+            self.add(series_id, i, *ps)
 
     def get_table_with_player(self, series_id: int, player_id: int) -> Table:
         q = Query()
