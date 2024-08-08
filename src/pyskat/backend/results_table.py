@@ -1,19 +1,16 @@
-from typing import TYPE_CHECKING
-
+import pandas as pd
 from tinydb.queries import QueryLike
 from tinydb.table import Document
 
+from .backend import Backend
 from .data_model import TableResult
 from .helpers import update_if_not_none
 
-if TYPE_CHECKING:
-    from .database import Database
-
 
 class TableResultsTable:
-    def __init__(self, db: "Database", id_module=1000):
-        self._db = db
-        self._table = self._db.db.table("results")
+    def __init__(self, backend: Backend, id_module=1000):
+        self._backend = backend
+        self._table = self._backend.db.table("results")
         self.id_module = id_module
 
     def make_id(
@@ -111,6 +108,14 @@ class TableResultsTable:
         results = [TableResult(id=p.doc_id, **p) for p in result]
         return results
 
+    def get_opponents_lost(self, series_id: int, player_id: int) -> int:
+        table = self._backend.tables.get_table_with_player(series_id, player_id)
+        other_players = table.player_ids
+        other_players.remove(player_id)
+        others_lost = [self._table.get(series_id, p).lost for p in other_players]
 
-def raise_result_not_found(id: int):
-    raise KeyError(f"A result with the given ID {id} was not found.")
+        return sum(others_lost)
+
+
+def raise_result_not_found(series_id: int, player_id: int):
+    raise KeyError(f"A result with the given ID {series_id}/{player_id} was not found.")

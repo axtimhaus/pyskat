@@ -1,18 +1,14 @@
-from typing import TYPE_CHECKING
-
 from tinydb.queries import QueryLike
 
+from .backend import Backend
 from .data_model import Player
 from .helpers import update_if_not_none
 
-if TYPE_CHECKING:
-    from .database import Database
-
 
 class PlayersTable:
-    def __init__(self, db: "Database"):
-        self._db = db
-        self._table = self._db.db.table("players")
+    def __init__(self, backend: Backend):
+        self._backend = backend
+        self._table = self._backend.db.table("players")
 
     def add(
         self,

@@ -1,19 +1,15 @@
-from typing import TYPE_CHECKING
-
-from tinydb.queries import QueryLike
+from tinydb.queries import Query, QueryLike
 from tinydb.table import Document
 
+from .backend import Backend
 from .data_model import Table
 from .helpers import update_if_not_none
 
-if TYPE_CHECKING:
-    from .database import Database
-
 
 class TablesTable:
-    def __init__(self, db: "Database", id_module=1000):
-        self._db = db
-        self._table = self._db.db.table("tables")
+    def __init__(self, backend: Backend, id_module=1000):
+        self._backend = backend
+        self._table = self._backend.db.table("tables")
         self.id_module = id_module
 
     def make_id(
@@ -62,7 +58,7 @@ class TablesTable:
         original = self._table.get(doc_id=id)
 
         if not original:
-            raise_table_not_found(id)
+            raise_table_not_found(series_id, table_id)
 
         updated = update_if_not_none(
             original,
@@ -86,7 +82,7 @@ class TablesTable:
         id = self.make_id(series_id, table_id)
         table = self._table.remove(doc_ids=[id])
         if not table:
-            raise_table_not_found(id)
+            raise_table_not_found(series_id, table_id)
 
     def get(
         self,
@@ -98,7 +94,7 @@ class TablesTable:
         table = self._table.get(doc_id=id)
 
         if not table:
-            raise_table_not_found(id)
+            raise_table_not_found(series_id, table_id)
 
         table = Table(id=id, **table)
         return table
@@ -115,6 +111,19 @@ class TablesTable:
         tables = [Table(id=p.doc_id, **p) for p in table]
         return tables
 
+    def clear_for_series(self, series_id: int) -> None:
+        """Remove all the tables for a defined series in the database."""
+        self._table.remove(Query().series_id == series_id)
 
-def raise_table_not_found(id: int):
-    raise KeyError(f"A table with the given ID {id} was not found.")
+    def get_table_with_player(self, series_id: int, player_id: int) -> Table:
+        q = Query()
+        table = self._table.get((q.series_id == series_id) & (q.players.test(lambda t: player_id in t)))
+
+        if not table:
+            raise ValueError(f"A table with player {player_id} is not present in series {series_id}.")
+
+        return table
+
+
+def raise_table_not_found(series_id: int, table_id: int):
+    raise KeyError(f"A table with the given IDs {series_id}/{table_id} was not found.")
