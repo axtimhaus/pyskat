@@ -1,24 +1,18 @@
-from typing import Optional
-
 import click
+import numpy as np
 
-from .main import pass_backend
-from ..backend import Backend
+from .series_commands import series_id_argument, CurrentSeries, pass_current_series
+from ..backend import Backend, evaluate_results, evaluate_total
 from ..rich import console, print_pandas_dataframe
+from .main import pass_backend
 
 
-@click.group()
-def evaluate():
-    """Evaluate game results."""
-    pass
-
-
-@evaluate.command()
+@click.command()
 @click.option(
     "-s",
     "--sort-by",
     type=click.STRING,
-    default=None,
+    default="score",
     help="Column key to sort results by.",
 )
 @click.option(
@@ -30,37 +24,10 @@ def evaluate():
     help="Sort in reverse order.",
 )
 @pass_backend
-def results(backend: Backend, sort_by: Optional[str], reverse: bool):
-    """Evaluate and display all game results."""
-    try:
-        evaluation = backend.evaluate_results()
-
-        print_pandas_dataframe(evaluation.sort_values(sort_by, ascending=reverse))
-    except KeyError:
-        console.print_exception()
-
-
-@evaluate.command()
-@click.option(
-    "-s",
-    "--sort-by",
-    type=click.STRING,
-    default=None,
-    help="Column key to sort results by.",
-)
-@click.option(
-    "-r",
-    "--reverse",
-    type=click.BOOL,
-    default=False,
-    is_flag=True,
-    help="Sort in reverse order.",
-)
-@pass_backend
-def total(backend: Backend, sort_by: Optional[str], reverse: bool):
+def evaluate(backend: Backend, sort_by: str | None, reverse: bool):
     """Evaluate and display game results per series and in total."""
     try:
-        evaluation = backend.evaluate_total()
+        evaluation = evaluate_total(backend)
 
         for ind in evaluation.columns.levels[0]:
             if isinstance(ind, int):
@@ -70,9 +37,11 @@ def total(backend: Backend, sort_by: Optional[str], reverse: bool):
             else:
                 title = None
 
-            print_pandas_dataframe(
-                evaluation[ind].sort_values(sort_by, ascending=reverse), title
-            )
+            df = evaluation[ind].copy()
+            df.sort_values(sort_by, ascending=reverse, inplace=True)
+            df["position"] = np.arange(1, len(df) + 1)
+            df.set_index("position", inplace=True)
+            print_pandas_dataframe(df, title)
             console.print()
     except KeyError:
         console.print_exception()

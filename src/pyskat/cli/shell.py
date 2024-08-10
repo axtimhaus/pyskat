@@ -3,9 +3,9 @@ from pathlib import Path
 import click
 import click_repl
 
-from .main import main
-from .config import APP_DIR
 from ..rich import console
+from .config import APP_DIR
+from .main import main
 
 DEFAULT_HISTORY_FILE = APP_DIR / "shell_history"
 

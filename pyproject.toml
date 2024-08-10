@@ -26,9 +26,9 @@ dependencies = [
     "click-repl ~= 0.3",
     "pandas ~= 2.2",
     "rich ~= 13.7",
-#    "textual ~= 0.47",
     "numpy ~= 1.26",
-    "tinydb ~= 4.0"
+    "tinydb ~= 4.0",
+    "pydantic ~= 2.8",
 ]
 
 [project.urls]

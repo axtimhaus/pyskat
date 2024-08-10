@@ -1,12 +1,11 @@
-from typing import Optional
-
 import click
 
+from ..backend import Backend
+from ..backend.data_model import to_pandas, TableResult
+from ..rich import console, print_pandas_dataframe
 from .main import pass_backend
 from .player_commands import player_id_argument
 from .series_commands import series_id_argument
-from ..backend import Backend
-from ..rich import console, print_pandas_dataframe
 
 RESULT_PLAYER_ID_HELP = "ID of the player."
 RESULT_SERIES_ID_HELP = "ID of the series."
@@ -19,7 +18,6 @@ RESULT_REMARKS_HELP = "Additional remarks if needed."
 @click.group()
 def result():
     """Manage game results."""
-    pass
 
 
 @result.command()
@@ -66,7 +64,7 @@ def add(
 ):
     """Add a new game result to database."""
     try:
-        backend.add_result(series_id, player_id, points, won, lost, remarks)
+        backend.results.add(series_id, player_id, points, won, lost, remarks)
     except KeyError:
         console.print_exception()
 
@@ -107,31 +105,23 @@ def update(
     backend: Backend,
     series_id: int,
     player_id: int,
-    points: Optional[int],
-    won: Optional[int],
-    lost: Optional[int],
-    remarks: Optional[str],
+    points: int | None,
+    won: int | None,
+    lost: int | None,
+    remarks: str | None,
 ):
     """Update an existing game result in database."""
     try:
         if points is None:
-            points = click.prompt(
-                "Points", default=backend.get_result(series_id, player_id)["points"]
-            )
+            points = click.prompt("Points", default=backend.results.get(series_id, player_id).points)
         if won is None:
-            won = click.prompt(
-                "Won", default=backend.get_result(series_id, player_id)["won"]
-            )
+            won = click.prompt("Won", default=backend.results.get(series_id, player_id).won)
         if lost is None:
-            remarks = click.prompt(
-                "Lost", default=backend.get_result(series_id, player_id)["lost"]
-            )
+            remarks = click.prompt("Lost", default=backend.results.get(series_id, player_id).lost)
         if remarks is None:
-            remarks = click.prompt(
-                "Remarks", default=backend.get_result(series_id, player_id)["remarks"]
-            )
+            remarks = click.prompt("Remarks", default=backend.results.get(series_id, player_id).remarks)
 
-        backend.update_result(series_id, player_id, points, won, lost, remarks)
+        backend.results.update(series_id, player_id, points, won, lost, remarks)
     except KeyError:
         console.print_exception()
 
@@ -143,7 +133,7 @@ def update(
 def remove(backend: Backend, series_id: int, player_id: int):
     """Remove a game result from database."""
     try:
-        backend.remove_result(series_id, player_id)
+        backend.results.remove(series_id, player_id)
     except KeyError:
         console.print_exception()
 
@@ -155,7 +145,7 @@ def remove(backend: Backend, series_id: int, player_id: int):
 def get(backend: Backend, series_id: int, player_id: int):
     """Get a game result from database."""
     try:
-        p = backend.get_result(series_id, player_id)
+        p = backend.results.get(series_id, player_id)
 
         console.print(p)
     except KeyError:
@@ -166,5 +156,6 @@ def get(backend: Backend, series_id: int, player_id: int):
 @pass_backend
 def list(backend: Backend):
     """List all game results ins database."""
-    results = backend.list_results()
-    print_pandas_dataframe(results)
+    results = backend.results.all()
+    df = to_pandas(results, TableResult, ["series_id", "player_id"])
+    print_pandas_dataframe(df)

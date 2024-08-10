@@ -1,14 +1,16 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import click
+import numpy as np
+from click import pass_context
 from click.shell_completion import CompletionItem
 
+from ..backend import Backend, evaluate_results
+from ..backend.data_model import to_pandas, Series, Table, Player
+from ..rich import console, print_pandas_dataframe
 from .config import APP_DIR
 from .main import pass_backend
-from ..backend import Backend
-from ..rich import console, print_pandas_dataframe
 
 SERIES_NAME_HELP = "A name for the series."
 SERIES_DATE_HELP = "The date or time stamp the series was played on."
@@ -16,20 +18,16 @@ SERIES_REMARKS_HELP = "Additional remarks."
 
 
 def complete_series_id(ctx: click.Context, param, incomplete):
-
     backend: Backend = ctx.find_object(Backend)
-    df = backend.list_series()
-    df.reset_index(inplace=True)
-    df["matches"] = df["id"].apply(lambda i: str(i).startswith(str(incomplete)))
-    df.query("matches", inplace=True)
+    all_series = backend.series.all()
 
-    c = [CompletionItem(t[0], help=t[1]) for t in df.itertuples(index=False)]
+    c = [
+        CompletionItem(s.id, help=f"{s.name} on {s.date}") for s in all_series if str(s.id).startswith(str(incomplete))
+    ]
     return c
 
 
-series_id_argument = click.argument(
-    "series_id", type=click.INT, shell_complete=complete_series_id, required=False
-)
+series_id_argument = click.argument("series_id", type=click.INT, shell_complete=complete_series_id, required=False)
 
 
 class CurrentSeries:
@@ -77,9 +75,9 @@ def series(ctx: click.Context, current_series_file: Path):
 @click.option(
     "-d",
     "--date",
-    type=click.STRING,
+    type=click.DateTime(),
     prompt=True,
-    default=datetime.today().strftime("%Y-%m-%d"),
+    default=datetime.today(),
     help=SERIES_DATE_HELP,
 )
 @click.option(
@@ -105,16 +103,16 @@ def add(
     backend: Backend,
     current_series: CurrentSeries,
     name: str,
-    date: str,
+    date: datetime,
     remarks: str,
     all_players: bool,
 ):
     """Create a new series and set it as current."""
-    id = backend.add_series(name, date, remarks)
+    id = backend.series.add(name, date, remarks)
     current_series.set(id)
 
     if all_players:
-        backend.add_players_to_series(id, "all")
+        backend.series.all_players(id)
 
 
 @series.command()
@@ -145,7 +143,7 @@ def set(backend: Backend, current_series: CurrentSeries, series_id: int):
 def add_players(
     backend: Backend,
     current_series: CurrentSeries,
-    series_id: Optional[int],
+    series_id: int | None,
     player_ids: list[int],
     all: bool,
 ):
@@ -154,13 +152,14 @@ def add_players(
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
 
     if all:
-        player_ids = "all"
+        backend.series.all_players(series_id)
+        return
 
     elif not player_ids:
         player_ids = [int(s) for s in click.prompt("Player IDs").split()]
 
     try:
-        backend.add_players_to_series(series_id, player_ids)
+        backend.series.add_players(series_id, player_ids)
     except KeyError:
         console.print_exception()
 
@@ -184,7 +183,7 @@ def add_players(
 def remove_players(
     backend: Backend,
     current_series: CurrentSeries,
-    series_id: Optional[int],
+    series_id: int | None,
     player_ids: list[int],
     all: bool,
 ):
@@ -193,13 +192,14 @@ def remove_players(
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
 
     if all:
-        player_ids = "all"
+        backend.series.clear_players()
+        return
 
     elif not player_ids:
         player_ids = [int(s) for s in click.prompt("Player IDs").split()]
 
     try:
-        backend.remove_players_from_series(series_id, player_ids)
+        backend.series.remove_players(series_id, player_ids)
     except KeyError:
         console.print_exception()
 
@@ -208,27 +208,97 @@ def remove_players(
 @pass_backend
 def list(backend: Backend):
     """List all series in database."""
-    players = backend.list_series()
-    print_pandas_dataframe(players)
+    all_series = backend.series.all()
+    df = to_pandas(all_series, Series, "id")
+    print_pandas_dataframe(df)
 
 
 @series.command()
 @series_id_argument
 @pass_current_series
 @pass_backend
-def shuffle_players(
-    backend: Backend, current_series: CurrentSeries, series_id: Optional[int]
-):
+@pass_context
+def shuffle_players(ctx: click.Context, backend: Backend, current_series: CurrentSeries, series_id: int | None):
     """Generate a random player distribution of players to tables."""
     if not series_id:
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
 
-    old = backend.list_tables(series_id)
-    if not old.empty:
+    old = backend.tables.all_for_series(series_id)
+    if old:
         if not click.confirm(
             "There is already a player-to-table distribution for this series. Proceeding will overwrite that."
         ):
             return
 
-    backend.shuffle_players_to_tables(series_id)
-    print_pandas_dataframe(backend.list_tables(series_id))
+    backend.tables.shuffle_players_for_series(series_id)
+    print_series_table(backend, series_id)
+
+
+@series.command()
+@series_id_argument
+@pass_current_series
+@pass_backend
+def list_tables(backend: Backend, current_series: CurrentSeries, series_id: int | None):
+    """Generate a random player distribution of players to tables."""
+    if not series_id:
+        series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
+    print_series_table(backend, series_id)
+
+
+def print_series_table(backend: Backend, id: int):
+    df = to_pandas(backend.tables.all_for_series(id), Table, ["table_id"])
+    df.drop("series_id", axis=1, inplace=True)
+
+    all_players = to_pandas(backend.players.all(), Player, "id")
+
+    def get_player_name(pid):
+        if pid == 0:
+            return ""
+        try:
+            return f"{all_players.loc[i]['name']} ({i})"
+        except KeyError:
+            return "<unknown player>"
+
+    for i in range(1, 5):
+        df[f"player{i}"] = df[f"player{i}_id"].map(get_player_name)
+        df.drop(f"player{i}_id", inplace=True, axis=1)
+
+    df.sort_index(axis=1, inplace=True)
+    print_pandas_dataframe(df)
+
+
+@series.command()
+@series_id_argument
+@click.option(
+    "-s",
+    "--sort-by",
+    type=click.STRING,
+    default="score",
+    help="Column key to sort results by.",
+)
+@click.option(
+    "-r",
+    "--reverse",
+    type=click.BOOL,
+    default=False,
+    is_flag=True,
+    help="Sort in reverse order.",
+)
+@pass_current_series
+@pass_backend
+def evaluate(backend: Backend, current_series: CurrentSeries, series_id: int, sort_by: str | None, reverse: bool):
+    """Evaluate and display all game results."""
+    if not series_id:
+        series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
+
+    try:
+        df = evaluate_results(backend)
+        df.reset_index(inplace=True)
+        df = df[df.series_id == series_id]
+        df.drop("series_id", axis=1, inplace=True)
+        df.sort_values(sort_by, ascending=reverse, inplace=True)
+        df["position"] = np.arange(1, len(df) + 1)
+        df.set_index("position", inplace=True)
+        print_pandas_dataframe(df, f"Series {series_id}")
+    except KeyError:
+        console.print_exception()
