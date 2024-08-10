@@ -13,10 +13,16 @@ class PlayersTable:
     def add(
         self,
         name: str,
+        active: bool = True,
         remarks: str | None = None,
     ) -> Player:
         """Add a new player to the database."""
-        player = Player(id=0, name=name, remarks=remarks or "")
+        player = Player(
+            id=0,
+            name=name,
+            active=active,
+            remarks=remarks or "",
+        )
         player.id = self._table.insert(player.model_dump(mode="json", exclude={"id"}))
         return player
 
@@ -24,6 +30,7 @@ class PlayersTable:
         self,
         id: int,
         name: str | None = None,
+        active: bool | None = None,
         remarks: str | None = None,
     ) -> Player:
         """Update an existing player in the database."""
@@ -35,6 +42,7 @@ class PlayersTable:
         updated = update_if_not_none(
             original,
             name=name,
+            active=active,
             remarks=remarks,
         )
         player = Player(id=id, **updated)

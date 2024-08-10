@@ -17,9 +17,9 @@ def backend(tmp_path):
     backend.players.add("P2")
     backend.players.add("P3")
     backend.players.add("P4")
-    backend.players.add("P5", "rem")
+    backend.players.add("P5", remarks="rem")
     backend.players.add("P6")
-    backend.players.add("P7")
+    backend.players.add("P7", active=False)
 
     backend.results.add(1, 6, 50, 7, 3)
     backend.results.add(1, 3, 450, 5, 1)
@@ -159,17 +159,42 @@ def test_evaluate_total(backend: Backend):
     assert np.all(np.remainder(result["total", "lost_points"], 50) == 0)
 
 
-def test_shuffle_players_to_tables(backend: Backend):
-    with pytest.raises(ValueError):
-        backend.tables.shuffle_players_for_series(1)
-
-    backend.series.all_players(1)
+def test_shuffle_players_to_tables_default(backend: Backend):
     backend.tables.shuffle_players_for_series(1)
+
+    assert len(backend.tables.get(1, 1).player_ids) == 3
+    assert len(backend.tables.get(1, 2).player_ids) == 3
+    assert len(backend.tables.all_for_series(1)) == 2
+
+
+def test_shuffle_players_to_tables_inactive_also(backend: Backend):
+    backend.tables.shuffle_players_for_series(1, active_only=False)
 
     assert len(backend.tables.get(1, 1).player_ids) == 4
     assert len(backend.tables.get(1, 2).player_ids) == 3
-
     assert len(backend.tables.all_for_series(1)) == 2
+
+
+def test_shuffle_players_to_tables_include(backend: Backend):
+    backend.tables.shuffle_players_for_series(1, include=[7])
+
+    assert len(backend.tables.get(1, 1).player_ids) == 4
+    assert len(backend.tables.get(1, 2).player_ids) == 3
+    assert len(backend.tables.all_for_series(1)) == 2
+
+
+def test_shuffle_players_to_tables_include_only(backend: Backend):
+    backend.tables.shuffle_players_for_series(1, include_only=[7, 5, 6])
+
+    assert len(backend.tables.get(1, 1).player_ids) == 3
+    assert len(backend.tables.all_for_series(1)) == 1
+
+
+def test_shuffle_players_to_tables_exclude(backend: Backend):
+    backend.tables.shuffle_players_for_series(1, exclude=[5, 6])
+
+    assert len(backend.tables.get(1, 1).player_ids) == 4
+    assert len(backend.tables.all_for_series(1)) == 1
 
 
 def test_update_series(backend: Backend):
@@ -190,37 +215,3 @@ def test_remove_series(backend: Backend):
 
     with pytest.raises(KeyError):
         backend.series.get(1)
-
-
-def test_add_players_to_series_all(backend: Backend):
-    backend.series.all_players(1)
-    series = backend.series.get(1)
-    assert series.player_ids == list(range(1, 8))
-
-    backend.series.clear_players(1)
-    series = backend.series.get(1)
-    assert series.player_ids == list()
-
-
-def test_add_players_to_series_ids(backend: Backend):
-    backend.series.add_players(1, [1, 4, 6])
-    series = backend.series.get(1)
-    assert series.player_ids == [1, 4, 6]
-
-    backend.series.remove_players(1, [4, 6])
-    series = backend.series.get(1)
-    assert series.player_ids == [1]
-
-
-def test_add_players_to_series_single(backend: Backend):
-    backend.series.add_player(1, 1)
-    series = backend.series.get(1)
-    assert series.player_ids == [1]
-
-    backend.series.add_player(1, 4)
-    series = backend.series.get(1)
-    assert series.player_ids == [1, 4]
-
-    backend.series.remove_player(1, 1)
-    series = backend.series.get(1)
-    assert series.player_ids == [4]
