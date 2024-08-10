@@ -10,20 +10,20 @@ def players():
 
     if request.method == "POST":
         if edit_id:
-            backend.update_player(
+            backend.players.update(
                 id=int(edit_id),
                 name=request.form["name"],
                 remarks=request.form["remarks"],
             )
         else:
-            backend.add_player(
+            backend.players.update(
                 name=request.form["name"],
                 remarks=request.form["remarks"],
             )
 
     if edit_id:
         try:
-            edit_player = backend.get_player(edit_id)
+            edit_player = backend.players.get(edit_id)
         except KeyError:
             edit_player = None
     else:
@@ -32,11 +32,11 @@ def players():
     remove_id = request.args.get("remove", None)
     if remove_id:
         try:
-            backend.remove_player(int(remove_id))
+            backend.players.remove(int(remove_id))
         except KeyError:
             pass
 
-    players_list = backend.list_players().itertuples()
+    players_list = backend.players.all()
 
     return render_template(
         "players.html",
