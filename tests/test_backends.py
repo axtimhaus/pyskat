@@ -211,6 +211,7 @@ def test_add_players_to_series_ids(backend: Backend):
     series = backend.series.get(1)
     assert series.player_ids == [1]
 
+
 def test_add_players_to_series_single(backend: Backend):
     backend.series.add_player(1, 1)
     series = backend.series.get(1)

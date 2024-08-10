@@ -75,7 +75,7 @@ class SeriesTable:
         return series
 
     def all(self) -> list[Series]:
-        """Get a list of all seriess in the database."""
+        """Get a list of all series in the database."""
         result = self._table.all()
         series = [Series(id=r.doc_id, **r) for r in result]
         return series

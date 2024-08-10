@@ -1,5 +1,7 @@
 from datetime import datetime
+from typing import Iterable
 
+import pandas as pd
 from pydantic import BaseModel, Field
 
 
@@ -64,3 +66,24 @@ class TotalResult:
     player_id: int = Field(gt=0)
     series_scores: list[int]
     total_score: int
+
+
+def to_pandas(
+    data: BaseModel | Iterable[BaseModel], model_type: type[BaseModel], index_cols: str | list[str]
+) -> pd.DataFrame:
+    if isinstance(data, BaseModel):
+        df = pd.DataFrame[data.model_dump()]
+    else:
+        if not data:
+            cols = list(model_type.model_fields.keys())
+            index = (
+                pd.Index([], name=index_cols)
+                if isinstance(index_cols, str)
+                else pd.MultiIndex.from_arrays([[] for c in index_cols], names=index_cols)
+            )
+            df = pd.DataFrame(pd.DataFrame(columns=cols, index=index))
+        else:
+            df = pd.DataFrame([item.model_dump() for item in data])
+
+    df.set_index(index_cols, inplace=True)
+    return df

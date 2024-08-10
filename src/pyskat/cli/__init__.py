@@ -1,9 +1,5 @@
+from . import evaluate_commands, player_commands, result_commands, series_commands, shell
 from .main import main
-from . import shell
-from . import player_commands
-from . import result_commands
-from . import evaluate_commands
-from . import series_commands
 
 main.add_command(shell.shell)
 main.add_command(player_commands.player)

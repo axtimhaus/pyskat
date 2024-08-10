@@ -2,7 +2,6 @@ from pathlib import Path
 
 import click
 
-from .config import APP_DIR
 from ..backend import Backend
 
 pass_backend = click.make_pass_decorator(Backend)
