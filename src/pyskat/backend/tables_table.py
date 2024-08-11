@@ -4,7 +4,7 @@ from tinydb.queries import Query, QueryLike
 from tinydb.table import Document
 
 from .backend import Backend
-from .data_model import Table
+from .data_model import Table, Player, to_pandas
 from .helpers import update_if_not_none
 
 
@@ -41,7 +41,13 @@ class TablesTable:
             player4_id=player4_id,
             remarks=remarks,
         )
-        self._table.insert(Document(table.model_dump(mode="json"), self.make_id(series_id, table_id)))
+
+        id =self.make_id(series_id, table_id)
+
+        if self._table.contains(doc_id=id):
+            raise KeyError(f"Table {table_id} for series {series_id} already present.")
+
+        self._table.insert(Document(table.model_dump(mode="json"), id))
         return table
 
     def update(
@@ -122,14 +128,31 @@ class TablesTable:
         """Remove all the tables for a defined series in the database."""
         self._table.remove(Query().series_id == series_id)
 
-    def shuffle_players_for_series(self, series_id: int):
-        player_ids = self._backend.series.get(series_id).player_ids
+    def shuffle_players_for_series(
+        self,
+        series_id: int,
+        active_only: bool = True,
+        include: list[int] | None = None,
+        include_only: list[int] | None = None,
+        exclude: list[int] | None = None,
+    ):
+        players = to_pandas(self._backend.players.all(), Player, "id")
 
-        if not player_ids:
-            raise ValueError("This series has no players assigned.")
+        if include_only is not None:
+            selector = players.index.isin(include_only)
+        else:
+            selector = np.full(len(players.index), True)
 
-        players = pd.Series(player_ids)
-        shuffled = players.sample(frac=1)
+            if active_only:
+                selector = selector & players.active
+
+            if include is not None:
+                selector = selector | players.index.isin(include)
+
+            if exclude is not None:
+                selector = selector & np.logical_not(players.index.isin(exclude))
+
+        shuffled = players[selector].sample(frac=1)
 
         player_count = len(shuffled)
         div, mod = divmod(player_count, 4)
@@ -142,12 +165,12 @@ class TablesTable:
 
         player_border = four_player_table_count * 4
         tables = [shuffled[i : i + 4] for i in np.arange(0, player_border, 4)] + [
-            shuffled[i : i + 3] for i in player_border + np.arange(0, three_player_table_count * 3, 4)
+            shuffled[i : i + 3] for i in player_border + np.arange(0, three_player_table_count * 3, 3)
         ]
 
         self.clear_for_series(series_id)
         for i, ps in enumerate(tables, 1):
-            self.add(series_id, i, *ps)
+            self.add(series_id, i, *ps.index)
 
     def get_table_with_player(self, series_id: int, player_id: int) -> Table:
         q = Query()

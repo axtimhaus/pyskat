@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 class Player(BaseModel):
     id: int = Field(ge=0)
     name: str
+    active: bool = Field(default=True)
     remarks: str = Field(default="")
 
 
@@ -42,7 +43,6 @@ class Series(BaseModel):
     name: str = Field(default="")
     date: datetime
     remarks: str = Field(default="")
-    player_ids: list[int]
 
 
 class TableResult(BaseModel):

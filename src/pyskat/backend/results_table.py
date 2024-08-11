@@ -38,7 +38,13 @@ class TableResultsTable:
             lost=lost,
             remarks=remarks or "",
         )
-        self._table.insert(Document(result.model_dump(mode="json"), self.make_id(series_id, player_id)))
+
+        id =self.make_id(series_id, player_id)
+
+        if self._table.contains(doc_id=id):
+            raise KeyError(f"Result for series {series_id} and player {player_id} already present.")
+
+        self._table.insert(Document(result.model_dump(mode="json"), id))
         return result
 
     def update(
