@@ -20,10 +20,16 @@ def index():
 @bp.post("/add")
 def add():
     try:
+        name = request.form["name"]
+        remarks = request.form["remarks"]
+    except KeyError:
+        abort(400, description="Invalid form data submitted.")
+
+    try:
         g.backend.players.add(
-            name=request.form["name"],
-            active=request.form["active"],
-            remarks=request.form["remarks"],
+            name=name,
+            active=True,
+            remarks=remarks,
         )
     except ValidationError as e:
         flash_validation_error(e)

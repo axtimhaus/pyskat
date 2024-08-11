@@ -4,7 +4,22 @@
 {% block content %}
     <h1>Players</h1>
 
-    <div class="mt-6">
+    <div class="mt-3">
+        <form id="form-player-add" method="post" action="{{ url_for("players.add") }}">
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input form="form-player-add" id="name" name="name" type="text" value="" class="form-control"/>
+            </div>
+            <div class="mb-3">
+                <label for="remarks" class="form-label">Remarks</label>
+                <input form="form-player-add" id="remarks" name="remarks" type="text" value=""
+                       class="form-control"/>
+            </div>
+            <input type="submit" form="form-player-add" class="btn btn-success" value="Add Player"/>
+        </form>
+    </div>
+
+    <div class="mt-5">
         <table class="table">
             <thead>
             <tr>
@@ -18,60 +33,65 @@
             <tbody>
             {% for p in players %}
                 <tr>
-                    <td>
-                        {{ p.id }}
-                    </td>
-                    <td>
-                        <label for="name" hidden>Name</label>
-                        <input form="form-player-{{- p.id -}}" id="name" name="name" type="text" value="{{- p.name -}}"
-                               class="form-control"/>
-                    </td>
-                    <td>
-                        <label for="active" hidden>Is Active</label>
-                        <input form="form-player-{{- p.id -}}" id="active" name="active" type="checkbox"
-                               {% if p.active %}checked{% endif %} class="form-check-input"/>
-                    </td>
-                    <td>
-                        <label for="remarks" hidden>Remarks</label>
-                        <input form="form-player-{{- p.id -}}" id="remarks" name="remarks" type="text"
-                               value="{{- p.remarks -}}" class="form-control"/>
-                    </td>
+                    <td>{{ p.id }}</td>
+                    <td>{{ p.name }}</td>
+                    <td>{% if p.active %}<i class="bi-check-circle text-success"></i>{% else %}<i class="bi-x-circle text-danger"></i>{% endif %}</td>
+                    <td>{{ p.remarks }}</td>
                     <td>
                         <div class="btn-group">
-                            <input type="submit" form="form-player-{{- p.id -}}" class="btn btn-primary" value="Save"/>
-                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modal-remove-player-{{- p.id -}}">Remove</button>
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal"
+                                    data-bs-target="#modal-update-player-{{- p.id -}}">Edit
+                            </button>
+                            <button type="button" class="btn btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modal-remove-player-{{- p.id -}}">Remove
+                            </button>
                         </div>
                     </td>
                 </tr>
             {% endfor %}
-            <tr>
-                <td>
-                    new
-                </td>
-                <td>
-                    <label for="name" hidden>Name</label>
-                    <input form="form-player-add" id="name" name="name" type="text" value="" class="form-control"/>
-                </td>
-                <td>
-                    <label for="active" hidden>Is Active</label>
-                    <input form="form-player-add" id="active" name="active" type="checkbox" checked
-                           class="form-check-input"/>
-                </td>
-                <td>
-                    <label for="remarks" hidden>Remarks</label>
-                    <input form="form-player-add" id="remarks" name="remarks" type="text" value=""
-                           class="form-control"/>
-                </td>
-                <td>
-                    <input type="submit" form="form-player-add" class="btn btn-success" value="Add Player"/>
-                </td>
-            </tr>
             </tbody>
         </table>
 
         {% for p in players %}
-            <form id="form-player-{{- p.id -}}" method="post" action="{{ url_for("players.update", id=p.id) }}"></form>
-            <div class="modal fade" id="modal-remove-player-{{- p.id -}}" tabindex="-1" aria-labelledby="modal-remove-player-{{- p.id -}}-label" aria-hidden="true">
+            <div class="modal fade" id="modal-update-player-{{- p.id -}}" tabindex="-1"
+                 aria-labelledby="modal-update-player-{{- p.id -}}-label" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="modal-update-player-{{- p.id -}}">Edit Player</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="form-update-player-{{- p.id -}}" method="post"
+                                  action="{{ url_for("players.update", id=p.id) }}">
+                                <div>
+                                    <label for="name" class="form-label">Name</label>
+                                    <input id="name" name="name" type="text" value="{{- p.name -}}"
+                                           class="form-control"/>
+                                </div>
+                                <div class="mt-3 form-check">
+                                    <input id="active" name="active" type="checkbox" {% if p.active %}checked{% endif %}
+                                           class="form-check-input"/>
+                                    <label for="active" class="form-check-label">Is Active</label>
+                                </div>
+                                <div class="mt-3">
+                                    <label for="remarks" class="form-label">Remarks</label>
+                                    <input id="remarks" name="remarks" type="text" value="{{- p.remarks -}}"
+                                           class="form-control"/>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <input type="submit" form="form-update-player-{{- p.id -}}" class="btn btn-warning"
+                                   value="Edit"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="modal-remove-player-{{- p.id -}}" tabindex="-1"
+                 aria-labelledby="modal-remove-player-{{- p.id -}}-label" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -79,16 +99,19 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            Really remove the player <strong>{{- p.name -}}</strong> with the ID <strong>{{- p.id -}}</strong>?
+                            Really remove the player <strong>{{- p.name -}}</strong> with the ID
+                            <strong>{{- p.id -}}</strong>?
+                            <form id="form-remove-player-{{- p.id -}}" method="post"
+                                  action="{{ url_for("players.remove", id=p.id) }}"></form>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <input type="submit" form="form-player-{{- p.id -}}" class="btn btn-danger" value="Remove" formaction="{{ url_for("players.remove", id=p.id) }}"/>
+                            <input type="submit" form="form-remove-player-{{- p.id -}}" class="btn btn-danger"
+                                   value="Remove"/>
                         </div>
                     </div>
                 </div>
             </div>
         {% endfor %}
-        <form id="form-player-add" method="post" action="{{ url_for("players.add") }}"></form>
     </div>
 {% endblock %}
