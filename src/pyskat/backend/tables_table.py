@@ -41,7 +41,13 @@ class TablesTable:
             player4_id=player4_id,
             remarks=remarks,
         )
-        self._table.insert(Document(table.model_dump(mode="json"), self.make_id(series_id, table_id)))
+
+        id =self.make_id(series_id, table_id)
+
+        if self._table.contains(doc_id=id):
+            raise KeyError(f"Table {table_id} for series {series_id} already present.")
+
+        self._table.insert(Document(table.model_dump(mode="json"), id))
         return table
 
     def update(
