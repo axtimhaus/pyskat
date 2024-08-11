@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 
-from .app import get_nav_items
+from .helpers import get_nav_items, flash_validation_error
 from flask import render_template, g, request, Blueprint, abort, redirect, url_for, flash
 
 bp = Blueprint("players", __name__, url_prefix="/players")
@@ -76,13 +76,3 @@ def flash_player_not_found(id: int):
 
 def redirect_to_index():
     return redirect(url_for("players.index"))
-
-
-def flash_validation_error(error: ValidationError):
-    validation_messages = [format_validation_message(e) for e in error.errors()]
-    flash("Submitted data was invalid:\n\n" + "\n".join(validation_messages))
-
-
-def format_validation_message(e: dict):
-    loc = ", ".join(e["loc"])
-    return f"{loc}: {e['msg']}"

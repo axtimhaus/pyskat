@@ -1,50 +1,82 @@
-from .app import get_nav_items
-from flask import render_template, g, request, Blueprint
+from datetime import datetime
+
+from pydantic import ValidationError
+
+from .helpers import get_nav_items, flash_validation_error
+from flask import render_template, g, request, Blueprint, abort, flash, redirect, url_for
 
 bp = Blueprint("series", __name__, url_prefix="/series")
 
 
 @bp.route("/", methods=["GET", "POST"])
-def series():
-    edit_id = request.args.get("edit", None)
-
-    if request.method == "POST":
-        if edit_id:
-            series_id = int(edit_id)
-            g.backend.series.update(
-                id=series_id,
-                name=request.form["name"],
-                date=request.form["date"],
-                remarks=request.form["remarks"],
-            )
-        else:
-            series_id = g.backend.series.add(
-                name=request.form["name"],
-                date=request.form["date"],
-                remarks=request.form["remarks"],
-            )
-        checked_players = [
-            int(k.split("_")[1]) for k, v in request.form.items() if k.startswith("player_") and v == "on"
-        ]
-        g.backend.series.clear_players(series_id)
-        g.backend.series.add_players(series_id, checked_players)
-
-    if edit_id:
-        edit_series = g.backend.series.get(edit_id)
-    else:
-        edit_series = None
-
-    remove_id = request.args.get("remove", None)
-    if remove_id:
-        g.backend.series.remove(int(remove_id))
-
-    series_list = list(g.backend.series.all())
-    players_list = list(g.backend.players.all())
+def index():
+    series_list = g.backend.series.all()
 
     return render_template(
         "series.html",
         nav_items=get_nav_items(active="series"),
         series=series_list,
-        players=players_list,
-        edit_series=edit_series,
+        now=datetime.today().isoformat(sep=" ", timespec="minutes")
     )
+
+
+@bp.post("/add")
+def add():
+    try:
+        name = request.form["name"]
+        date = request.form["date"]
+        remarks = request.form["remarks"]
+    except KeyError:
+        abort(400, description="Invalid form data submitted.")
+
+    try:
+        g.backend.series.add(
+            name=name,
+            date=date,
+            remarks=remarks,
+        )
+    except ValidationError as e:
+        flash_validation_error(e)
+
+    return redirect_to_index()
+
+
+@bp.post("/update/<int:id>")
+def update(id: int):
+    try:
+        name = request.form["name"]
+        date = request.form["date"]
+        remarks = request.form["remarks"]
+    except KeyError:
+        abort(400, description="Invalid form data submitted.")
+
+    try:
+        g.backend.series.update(
+            id=id,
+            name=name,
+            date=date,
+            remarks=remarks,
+        )
+    except KeyError:
+        flash_series_not_found(id)
+    except ValidationError as e:
+        flash_validation_error(e)
+
+    return redirect_to_index()
+
+
+@bp.post("/remove/<int:id>")
+def remove(id: int):
+    try:
+        g.backend.series.remove(id)
+    except KeyError:
+        flash_series_not_found(id)
+    return redirect_to_index()
+
+
+def flash_series_not_found(id: int):
+    flash(f"Series {id} not found.", "danger")
+
+
+def redirect_to_index():
+    return redirect(url_for("series.index"))
