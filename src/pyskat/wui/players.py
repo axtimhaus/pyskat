@@ -1,29 +1,29 @@
-from .app import app, get_nav_items, get_backend
-from flask import render_template, session, request
+from .app import get_nav_items
+from flask import render_template, g, request, Blueprint
+
+bp = Blueprint("players", __name__, url_prefix="/players")
 
 
-@app.route("/players", methods=["GET", "POST"])
+@bp.route("/", methods=["GET", "POST"])
 def players():
-    backend = get_backend()
-
     edit_id = request.args.get("edit", None)
 
     if request.method == "POST":
         if edit_id:
-            backend.players.update(
+            g.backend.players.update(
                 id=int(edit_id),
                 name=request.form["name"],
                 remarks=request.form["remarks"],
             )
         else:
-            backend.players.update(
+            g.backend.players.update(
                 name=request.form["name"],
                 remarks=request.form["remarks"],
             )
 
     if edit_id:
         try:
-            edit_player = backend.players.get(edit_id)
+            edit_player = g.backend.players.get(edit_id)
         except KeyError:
             edit_player = None
     else:
@@ -32,11 +32,11 @@ def players():
     remove_id = request.args.get("remove", None)
     if remove_id:
         try:
-            backend.players.remove(int(remove_id))
+            g.backend.players.remove(int(remove_id))
         except KeyError:
             pass
 
-    players_list = backend.players.all()
+    players_list = g.backend.players.all()
 
     return render_template(
         "players.html",
