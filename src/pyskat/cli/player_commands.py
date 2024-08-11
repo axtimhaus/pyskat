@@ -106,9 +106,9 @@ def get(backend: Backend, player_id: int):
         console.print_exception()
 
 
-@player.command()
+@player.command(name="list")
 @pass_backend
-def list(backend: Backend):
+def _list(backend: Backend):
     """List all players in database."""
     players = backend.players.all()
     df = to_pandas(players, Player, "id")
