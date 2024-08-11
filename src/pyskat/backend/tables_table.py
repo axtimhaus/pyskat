@@ -42,7 +42,7 @@ class TablesTable:
             remarks=remarks,
         )
 
-        id =self.make_id(series_id, table_id)
+        id = self.make_id(series_id, table_id)
 
         if self._table.contains(doc_id=id):
             raise KeyError(f"Table {table_id} for series {series_id} already present.")
@@ -146,10 +146,10 @@ class TablesTable:
             if active_only:
                 selector = selector & players.active
 
-            if include is not None:
+            if include:
                 selector = selector | players.index.isin(include)
 
-            if exclude is not None:
+            if exclude:
                 selector = selector & np.logical_not(players.index.isin(exclude))
 
         shuffled = players[selector].sample(frac=1)

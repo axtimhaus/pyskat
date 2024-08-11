@@ -88,15 +88,6 @@ def series(ctx: click.Context, current_series_file: Path):
     default="",
     help=SERIES_REMARKS_HELP,
 )
-@click.option(
-    "-a",
-    "--all-players",
-    type=click.BOOL,
-    is_flag=True,
-    prompt=True,
-    default=False,
-    help="Whether to add all players to new series.",
-)
 @pass_current_series
 @pass_backend
 def add(
@@ -105,14 +96,83 @@ def add(
     name: str,
     date: datetime,
     remarks: str,
-    all_players: bool,
 ):
     """Create a new series and set it as current."""
     id = backend.series.add(name, date, remarks)
     current_series.set(id)
 
-    if all_players:
-        backend.series.all_players(id)
+
+@series.command()
+@series_id_argument
+@click.option(
+    "-n",
+    "--name",
+    type=click.STRING,
+    default=None,
+    help=SERIES_NAME_HELP,
+)
+@click.option(
+    "-d",
+    "--date",
+    type=click.DateTime(),
+    default=None,
+    help=SERIES_DATE_HELP,
+)
+@click.option(
+    "-r",
+    "--remarks",
+    type=click.STRING,
+    default=None,
+    help=SERIES_REMARKS_HELP,
+)
+@pass_current_series
+@pass_backend
+def update(
+    backend: Backend,
+    current_series: CurrentSeries,
+    series_id: int,
+    name: str,
+    date: datetime,
+    remarks: str,
+):
+    """Create a new series and set it as current."""
+    if not series_id:
+        series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
+
+    try:
+        if name is None:
+            name = click.prompt("Name", default=backend.series.get(series_id).name)
+        if date is None:
+            date = click.prompt("Date", default=backend.series.get(series_id).date)
+        if remarks is None:
+            remarks = click.prompt("Remarks", default=backend.series.get(series_id).remarks)
+
+        backend.series.update(series_id, name, date, remarks)
+    except KeyError:
+        console.print_exception()
+
+
+@series.command()
+@series_id_argument
+@pass_backend
+def remove(backend: Backend, series_id: int):
+    """Remove a series from database."""
+    try:
+        target = backend.series.get(series_id)
+    except KeyError:
+        console.print_exception()
+        return
+
+    if not click.confirm(
+        f"Remove series {series_id} ({target.name} on {target.date})? This can not be undone. Respective tables and results will also be removed.",
+        default=False,
+    ):
+        console.print("Aborted.")
+        return
+
+    backend.series.remove(series_id)
+    backend.tables.clear_for_series(series_id)
+    backend.results.clear_for_series(series_id)
 
 
 @series.command()
@@ -124,89 +184,9 @@ def set(backend: Backend, current_series: CurrentSeries, series_id: int):
     current_series.set(series_id)
 
 
-@series.command()
-@series_id_argument
-@click.option(
-    "-a",
-    "--all",
-    type=click.BOOL,
-    default=False,
-    is_flag=True,
-)
-@click.argument(
-    "player-ids",
-    type=click.INT,
-    nargs=-1,
-)
-@pass_current_series
+@series.command(name="list")
 @pass_backend
-def add_players(
-    backend: Backend,
-    current_series: CurrentSeries,
-    series_id: int | None,
-    player_ids: list[int],
-    all: bool,
-):
-    """Add players to a series."""
-    if not series_id:
-        series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
-
-    if all:
-        backend.series.all_players(series_id)
-        return
-
-    elif not player_ids:
-        player_ids = [int(s) for s in click.prompt("Player IDs").split()]
-
-    try:
-        backend.series.add_players(series_id, player_ids)
-    except KeyError:
-        console.print_exception()
-
-
-@series.command()
-@series_id_argument
-@click.option(
-    "-a",
-    "--all",
-    type=click.BOOL,
-    default=False,
-    is_flag=True,
-)
-@click.argument(
-    "player-ids",
-    type=click.INT,
-    nargs=-1,
-)
-@pass_current_series
-@pass_backend
-def remove_players(
-    backend: Backend,
-    current_series: CurrentSeries,
-    series_id: int | None,
-    player_ids: list[int],
-    all: bool,
-):
-    """Remove players from a series."""
-    if not series_id:
-        series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
-
-    if all:
-        backend.series.clear_players()
-        return
-
-    elif not player_ids:
-        player_ids = [int(s) for s in click.prompt("Player IDs").split()]
-
-    try:
-        backend.series.remove_players(series_id, player_ids)
-    except KeyError:
-        console.print_exception()
-
-
-@series.command()
-@pass_backend
-def list(backend: Backend):
+def _list(backend: Backend):
     """List all series in database."""
     all_series = backend.series.all()
     df = to_pandas(all_series, Series, "id")
@@ -215,10 +195,49 @@ def list(backend: Backend):
 
 @series.command()
 @series_id_argument
+@click.option(
+    "-i",
+    "--include",
+    type=click.INT,
+    default=[],
+    multiple=True,
+    help="Include an additional player explicitly. Can be given multiple times.",
+)
+@click.option(
+    "-o",
+    "--include-only",
+    type=click.INT,
+    default=None,
+    multiple=True,
+    help="Include an player and ignore automatically included ones. Can be given multiple times. If this is given, all other options have no effect",
+)
+@click.option(
+    "-i",
+    "--exclude",
+    type=click.INT,
+    default=[],
+    multiple=True,
+    help="Exclude an additional player explicitly. Can be given multiple times.",
+)
+@click.option(
+    "--active-only/--inactive-also",
+    type=click.BOOL,
+    default=True,
+    help="Include only active or also inactive players.",
+)
 @pass_current_series
 @pass_backend
 @pass_context
-def shuffle_players(ctx: click.Context, backend: Backend, current_series: CurrentSeries, series_id: int | None):
+def shuffle_tables(
+    ctx: click.Context,
+    backend: Backend,
+    current_series: CurrentSeries,
+    series_id: int | None,
+    include: tuple[int],
+    exclude: tuple[int],
+    include_only: tuple[int],
+    active_only: bool,
+):
     """Generate a random player distribution of players to tables."""
     if not series_id:
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
@@ -230,7 +249,9 @@ def shuffle_players(ctx: click.Context, backend: Backend, current_series: Curren
         ):
             return
 
-    backend.tables.shuffle_players_for_series(series_id)
+    backend.tables.shuffle_players_for_series(
+        series_id, active_only=active_only, include=include or None, exclude=exclude or None, include_only=include_only or None
+    )
     print_series_table(backend, series_id)
 
 

@@ -133,9 +133,16 @@ def update(
 def remove(backend: Backend, series_id: int, player_id: int):
     """Remove a game result from database."""
     try:
-        backend.results.remove(series_id, player_id)
+        target = backend.results.get(series_id, player_id)
     except KeyError:
         console.print_exception()
+        return
+
+    if not click.confirm(f"Remove result {series_id}/{player_id}?", default=False):
+        console.print("Aborted.")
+        return
+
+    backend.results.remove(series_id, player_id)
 
 
 @result.command()
@@ -152,9 +159,9 @@ def get(backend: Backend, series_id: int, player_id: int):
         console.print_exception()
 
 
-@result.command()
+@result.command(name="list")
 @pass_backend
-def list(backend: Backend):
+def _list(backend: Backend):
     """List all game results ins database."""
     results = backend.results.all()
     df = to_pandas(results, TableResult, ["series_id", "player_id"])
