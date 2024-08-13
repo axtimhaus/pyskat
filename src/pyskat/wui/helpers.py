@@ -31,7 +31,9 @@ def get_nav_items(active: str | None = None) -> list[NavItem]:
 
 def flash_validation_error(error: ValidationError):
     validation_messages = [format_validation_message(e) for e in error.errors()]
-    flash("Submitted data was invalid:\n\n" + "\n".join(validation_messages))
+    flash("Submitted data was invalid.", "danger")
+    for message in validation_messages:
+        flash(message, "danger")
 
 
 def format_validation_message(e: dict):
