@@ -1,3 +1,5 @@
+{% from "macros.html" import nav_link with context %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,11 +24,11 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarColor01">
             <ul class="navbar-nav me-auto">
-                {% for nav_item in nav_items %}
-                    <li class="nav-item" id="{{ nav_item.id }}">
-                        <a class="nav-link {% if nav_item.active %}active{% endif %}" href="{{ nav_item.link }}">{{ nav_item.caption }}</a>
-                    </li>
-                {% endfor %}
+                {{ nav_link("players", "players.index", "Players") }}
+                {{ nav_link("series", "series.index", "Series") }}
+                {{ nav_link("tables", "tables.index", "Tables") }}
+                {{ nav_link("results", "results.index", "Results") }}
+                {{ nav_link("evaluation", "evaluation.index", "Evaluation") }}
             </ul>
         </div>
     </div>

@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 
-from .helpers import get_nav_items, flash_validation_error
+from .helpers import flash_validation_error
 from flask import render_template, g, request, Blueprint, abort, redirect, url_for, flash
 
 bp = Blueprint("players", __name__, url_prefix="/players")
@@ -12,7 +12,6 @@ def index():
 
     return render_template(
         "players.html",
-        nav_items=get_nav_items(active="players"),
         players=players_list,
     )
 

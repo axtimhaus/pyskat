@@ -32,8 +32,7 @@ def create_app(
     @app.route("/")
     def index():
         return render_template(
-            "index.html",
-            nav_items=get_nav_items(),
+            "index.html"
         )
 
     from . import players
@@ -43,5 +42,17 @@ def create_app(
     from . import series
 
     app.register_blueprint(series.bp)
+
+    from . import tables
+
+    app.register_blueprint(tables.bp)
+
+    from . import results
+
+    app.register_blueprint(results.bp)
+
+    from . import evaluation
+
+    app.register_blueprint(evaluation.bp)
 
     return app

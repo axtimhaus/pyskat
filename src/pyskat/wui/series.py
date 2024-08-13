@@ -2,8 +2,8 @@ from datetime import datetime
 
 from pydantic import ValidationError
 
-from .helpers import get_nav_items, flash_validation_error
-from flask import render_template, g, request, Blueprint, abort, flash, redirect, url_for
+from .helpers import flash_validation_error
+from flask import render_template, g, request, Blueprint, abort, flash, redirect, url_for, session
 
 bp = Blueprint("series", __name__, url_prefix="/series")
 
@@ -14,7 +14,6 @@ def index():
 
     return render_template(
         "series.html",
-        nav_items=get_nav_items(active="series"),
         series=series_list,
         now=datetime.today().isoformat(sep=" ", timespec="minutes")
     )
@@ -72,6 +71,10 @@ def remove(id: int):
     except KeyError:
         flash_series_not_found(id)
     return redirect_to_index()
+
+@bp.get("/get/<int:id>")
+def set(id):
+    session["current_series"] = id
 
 
 def flash_series_not_found(id: int):
