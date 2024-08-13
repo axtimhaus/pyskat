@@ -24,12 +24,20 @@ def wui():
 
 @wui.command()
 @instance_path_option
+@click.option(
+    "-t",
+    "--theme",
+    default="darkly",
+    type=click.STRING,
+    help="The name of the bootswatch theme to use.",
+)
 @pass_backend
 def run(
     backend: Backend,
     instance_path: Path,
+    theme: str | None,
 ):
-    app = create_app(backend, instance_path)
+    app = create_app(backend, instance_path, theme)
     app.run()
 
 

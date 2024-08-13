@@ -11,12 +11,16 @@ from . import default_config
 def create_app(
     backend: Backend,
     instance_directory: Path,
+    theme: str | None = None,
 ):
     app = Flask("pyskat.wui", instance_relative_config=True, instance_path=str(instance_directory.resolve()))
     app.config.from_object(default_config)
 
     app.config.from_file("pyskat_config.toml", load=tomllib.load, silent=True)
     app.config.from_prefixed_env(prefix="PYSKAT_")
+
+    if theme:
+        app.config["THEME"] = theme
 
     def provide_backend():
         from flask import g
