@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}PySkat - Players{% endblock %}
+{% block head %}{% endblock %}
+
+{% macro player_display(id) %}
+    <td>{{ id }}</td>
+    <td>{{ players[id].name }}</td>
+    <td>{% if id in results %}<i class="bi-check-circle text-success"></i>{% else %}<i class="bi-x-circle text-danger"></i>{% endif %}</td>
+{% endmacro %}
+
+{% block content %}
+    <h1>Tables</h1>
+
+    <div class="mt-5">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Player ID</th>
+                <th>Player Name</th>
+                <th>Result Present?</th>
+                <th>Remarks</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for t in tables %}
+                {% set player_count = t.player_ids|length %}
+                <tr>
+                    <td rowspan="{{ player_count }}">{{ t.table_id }}</td>
+                    {{ player_display(t.player1_id) }}
+                    <td rowspan="{{ player_count }}">{{ t.remarks }}</td>
+                    <td rowspan="{{ player_count }}">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal"
+                                    data-bs-target="#modal-update-table-{{- t.id -}}">Edit
+                            </button>
+                            <button type="button" class="btn btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modal-remove-table-{{- t.id -}}">Remove
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>{{ player_display(t.player2_id) }}</tr>
+                <tr>{{ player_display(t.player3_id) }}</tr>
+                {% if t.player4_id %}
+                    <tr>{{ player_display(t.player4_id) }}</tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+
+{#        {% for p in tables %}#}
+{#            <div class="modal fade" id="modal-update-table-{{- p.id -}}" tabindex="-1"#}
+{#                 aria-labelledby="modal-update-table-{{- p.id -}}-label" aria-hidden="true">#}
+{#                <div class="modal-dialog">#}
+{#                    <div class="modal-content">#}
+{#                        <div class="modal-header">#}
+{#                            <h1 class="modal-title fs-5" id="modal-update-table-{{- p.id -}}">Edit Player</h1>#}
+{#                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>#}
+{#                        </div>#}
+{#                        <div class="modal-body">#}
+{#                            <form id="form-update-table-{{- p.id -}}" method="post"#}
+{#                                  action="{{ url_for("tables.update", id=p.id) }}">#}
+{#                                <div>#}
+{#                                    <label for="name" class="form-label">Name</label>#}
+{#                                    <input id="name" name="name" type="text" value="{{- p.name -}}"#}
+{#                                           class="form-control"/>#}
+{#                                </div>#}
+{#                                <div class="mt-3 form-check">#}
+{#                                    <input id="active" name="active" type="checkbox" {% if p.active %}checked{% endif %}#}
+{#                                           class="form-check-input"/>#}
+{#                                    <label for="active" class="form-check-label">Is Active</label>#}
+{#                                </div>#}
+{#                                <div class="mt-3">#}
+{#                                    <label for="remarks" class="form-label">Remarks</label>#}
+{#                                    <input id="remarks" name="remarks" type="text" value="{{- p.remarks -}}"#}
+{#                                           class="form-control"/>#}
+{#                                </div>#}
+{#                            </form>#}
+{#                        </div>#}
+{#                        <div class="modal-footer">#}
+{#                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>#}
+{#                            <input type="submit" form="form-update-table-{{- p.id -}}" class="btn btn-warning"#}
+{#                                   value="Edit"/>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="modal fade" id="modal-remove-table-{{- p.id -}}" tabindex="-1"#}
+{#                 aria-labelledby="modal-remove-table-{{- p.id -}}-label" aria-hidden="true">#}
+{#                <div class="modal-dialog">#}
+{#                    <div class="modal-content">#}
+{#                        <div class="modal-header">#}
+{#                            <h1 class="modal-title fs-5" id="modal-remove-table-{{- p.id -}}">Remove Player</h1>#}
+{#                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>#}
+{#                        </div>#}
+{#                        <div class="modal-body">#}
+{#                            Really remove the table <strong>{{- p.name -}}</strong> with the ID#}
+{#                            <strong>{{- p.id -}}</strong>?#}
+{#                        </div>#}
+{#                        <div class="modal-footer">#}
+{#                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>#}
+{#                            <a class="btn btn-danger" href="{{ url_for("tables.remove", id=p.id) }}">Remove</a>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        {% endfor %}#}
+    </div>
+{% endblock %}
