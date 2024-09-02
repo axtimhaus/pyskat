@@ -51,6 +51,7 @@
                                 <input type="submit" form="form-set-series-{{- p.id -}}" class="btn btn-primary"
                                        value="Set Current"/>
                             {% endif %}
+                            <a class="btn btn-primary" href="{{ url_for("tables.index", series_id=p.id) }}">View Tables</a>
                             <button type="button" class="btn btn-warning" data-bs-toggle="modal"
                                     data-bs-target="#modal-update-series-{{- p.id -}}">Edit
                             </button>
