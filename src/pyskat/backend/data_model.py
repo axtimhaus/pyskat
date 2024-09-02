@@ -14,7 +14,7 @@ class Player(BaseModel):
 
 class Table(BaseModel):
     series_id: int = Field(gt=0)
-    table_id: int = Field(gt=0)
+    table_id: int | None = Field(gt=0)
     player1_id: int = Field(ge=0)
     player2_id: int = Field(ge=0)
     player3_id: int = Field(ge=0)
