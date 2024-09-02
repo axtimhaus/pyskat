@@ -27,3 +27,28 @@ class Backend:
 
         self.tables = TablesTable(self)
         """Table of series-player-table mappings."""
+
+    def fake_data(self, player_count: int = 13, series_count: int = 4):
+        try:
+            from faker import Faker
+
+            faker = Faker()
+        except ImportError as e:
+            raise ImportError(
+                "Need the faker package to generate fake data. It may be installed with the [fake] extra."
+            ) from e
+
+        players = [self.players.add(faker.name()) for i in range(player_count)]
+
+        for i in range(series_count):
+            series = self.series.add(faker.city(), faker.date_time_this_year())
+            self.tables.shuffle_players_for_series(series.id)
+
+            for p in players:
+                self.results.add(
+                    series.id,
+                    p.id,
+                    faker.random_int(0, 1000, 1),
+                    faker.random_int(0, 10, 1),
+                    faker.random_int(0, 5, 1),
+                )
