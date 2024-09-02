@@ -8,7 +8,7 @@ from flask import render_template, g, request, Blueprint, abort, flash, redirect
 bp = Blueprint("series", __name__, url_prefix="/series")
 
 
-@bp.route("/", methods=["GET", "POST"])
+@bp.get("/")
 def index():
     series_list = g.backend.series.all()
 

@@ -6,7 +6,7 @@ from flask import render_template, g, request, Blueprint, abort, redirect, url_f
 bp = Blueprint("players", __name__, url_prefix="/players")
 
 
-@bp.route("/", methods=["GET", "POST"])
+@bp.get("/")
 def index():
     players_list = g.backend.players.all()
 
