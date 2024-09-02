@@ -12,7 +12,7 @@ def index(series_id):
     series_id = series_id or session.get("current_series", None)
 
     if series_id:
-        tables_list = g.backend.tables.all_for_series(series_id)
+        tables_list = g.backend.tables.all(series_id)
     else:
         flash("Please select a series on the series page to use this page.", "warning")
         tables_list = []
@@ -24,5 +24,5 @@ def index(series_id):
         "tables.html",
         tables=tables_list,
         players={p.id: p for p in players},
-        results={r.table_id : r for r in results}
+        results={r.player_id : r for r in results}
     )

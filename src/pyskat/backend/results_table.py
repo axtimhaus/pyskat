@@ -113,10 +113,10 @@ class TableResultsTable:
         results = [TableResult(id=p.doc_id, **p) for p in result]
         return results
 
-    def all_for_series(self, series_id: int) -> list[Table]:
+    def all_for_series(self, series_id: int) -> list[TableResult]:
         """Get all the results for a defined series in the database."""
         results = self._table.search(Query().series_id == series_id)
-        results = [Table(id=p.doc_id, **p) for p in results]
+        results = [TableResult(id=p.doc_id, **p) for p in results]
         return results
 
     def clear_for_series(self, series_id: int) -> None:
