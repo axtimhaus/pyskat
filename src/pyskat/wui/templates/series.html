@@ -45,6 +45,12 @@
                     <td>{{ p.remarks }}</td>
                     <td>
                         <div class="btn-group">
+                            {% if session.current_series == p.id %}
+                                <button class="btn btn-success" disabled>Current</button>
+                            {% else %}
+                                <input type="submit" form="form-set-series-{{- p.id -}}" class="btn btn-primary"
+                                       value="Set Current"/>
+                            {% endif %}
                             <button type="button" class="btn btn-warning" data-bs-toggle="modal"
                                     data-bs-target="#modal-update-series-{{- p.id -}}">Edit
                             </button>
@@ -118,6 +124,9 @@
                     </div>
                 </div>
             </div>
+
+            <form id="form-set-series-{{- p.id -}}" method="post"
+                  action="{{ url_for("series.set_current", id=p.id) }}"></form>
         {% endfor %}
     </div>
 {% endblock %}

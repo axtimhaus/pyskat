@@ -72,9 +72,11 @@ def remove(id: int):
         flash_series_not_found(id)
     return redirect_to_index()
 
-@bp.get("/get/<int:id>")
-def set(id):
+
+@bp.post("/set-current/<int:id>")
+def set_current(id):
     session["current_series"] = id
+    return redirect_to_index()
 
 
 def flash_series_not_found(id: int):
