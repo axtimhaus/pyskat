@@ -7,7 +7,6 @@ class Backend:
     def __init__(
         self,
         database_file: Path,
-        table_id_module=1000,
         result_id_module=1000,
     ):
         from .player_table import PlayersTable
@@ -26,5 +25,5 @@ class Backend:
         self.series = SeriesTable(self)
         """Table of game series."""
 
-        self.tables = TablesTable(self, table_id_module)
+        self.tables = TablesTable(self)
         """Table of series-player-table mappings."""

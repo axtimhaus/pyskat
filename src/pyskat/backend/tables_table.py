@@ -9,22 +9,16 @@ from .helpers import update_if_not_none
 
 
 class TablesTable:
-    def __init__(self, backend: Backend, id_module=1000):
+    def __init__(self, backend: Backend):
         self._backend = backend
-        self._table = self._backend.db.table("tables")
-        self.id_module = id_module
+        self._db = self._backend.db
 
-    def make_id(
-        self,
-        series_id: int,
-        table_id: int,
-    ):
-        return series_id * self.id_module + table_id
+    def get_table(self, series_id):
+        return self._db.table(f"series_{series_id}_tables")
 
     def add(
         self,
         series_id: int,
-        table_id: int,
         player1_id: int,
         player2_id: int,
         player3_id: int,
@@ -32,9 +26,11 @@ class TablesTable:
         remarks: str | None = None or "",
     ) -> Table:
         """Add a new table to the database."""
-        table = Table(
+        table = self.get_table(series_id)
+
+        model = Table(
             series_id=series_id,
-            table_id=table_id,
+            table_id=None,
             player1_id=player1_id,
             player2_id=player2_id,
             player3_id=player3_id,
@@ -42,13 +38,8 @@ class TablesTable:
             remarks=remarks,
         )
 
-        id = self.make_id(series_id, table_id)
-
-        if self._table.contains(doc_id=id):
-            raise KeyError(f"Table {table_id} for series {series_id} already present.")
-
-        self._table.insert(Document(table.model_dump(mode="json"), id))
-        return table
+        table.insert(model.model_dump(mode="json", exclude={"table_id"}))
+        return model
 
     def update(
         self,
@@ -61,8 +52,8 @@ class TablesTable:
         remarks: str | None = None,
     ) -> Table:
         """Update an existing table in the database."""
-        id = self.make_id(series_id, table_id)
-        original = self._table.get(doc_id=id)
+        table = self.get_table(series_id)
+        original = table.get(doc_id=table_id)
 
         if not original:
             raise_table_not_found(series_id, table_id)
@@ -75,9 +66,9 @@ class TablesTable:
             player4_id=player4_id,
             remarks=remarks,
         )
-        table = Table(**updated)
+        model = Table(**updated)
 
-        self._table.update(table.model_dump(mode="json"), doc_ids=[id])
+        table.update(model.model_dump(mode="json"), doc_ids=[table_id])
         return table
 
     def remove(
@@ -86,9 +77,9 @@ class TablesTable:
         table_id: int,
     ) -> None:
         """Remove a table from the database."""
-        id = self.make_id(series_id, table_id)
-        table = self._table.remove(doc_ids=[id])
-        if not table:
+        table = self.get_table(series_id)
+        result = table.remove(doc_ids=[table_id])
+        if not result:
             raise_table_not_found(series_id, table_id)
 
     def get(
@@ -97,36 +88,32 @@ class TablesTable:
         table_id: int,
     ) -> Table:
         """Get a table from the database."""
-        id = self.make_id(series_id, table_id)
-        table = self._table.get(doc_id=id)
+        table = self.get_table(series_id)
+        result = table.get(doc_id=table_id)
 
-        if not table:
+        if not result:
             raise_table_not_found(series_id, table_id)
 
-        table = Table(id=id, **table)
-        return table
+        result = Table(id=table_id, **result)
+        return result
 
-    def all(self) -> list[Table]:
-        """Get a list of all tables in the database."""
-        table = self._table.all()
-        tables = [Table(id=p.doc_id, **p) for p in table]
-        return tables
-
-    def query(self, query: QueryLike) -> list[Table]:
+    def query(self, series_id: int, query: QueryLike) -> list[Table]:
         """Get the tables of a TinyDB query."""
-        table = self._table.search(query)
-        tables = [Table(id=p.doc_id, **p) for p in table]
+        table = self.get_table(series_id)
+        result = table.search(query)
+        tables = [Table(id=p.doc_id, **p) for p in result]
         return tables
 
-    def all_for_series(self, series_id: int) -> list[Table]:
+    def all(self, series_id: int) -> list[Table]:
         """Get all the tables for a defined series in the database."""
-        tables = self._table.search(Query().series_id == series_id)
+        table = self.get_table(series_id)
+        tables = table.search(Query().series_id == series_id)
         tables = [Table(id=p.doc_id, **p) for p in tables]
         return tables
 
     def clear_for_series(self, series_id: int) -> None:
         """Remove all the tables for a defined series in the database."""
-        self._table.remove(Query().series_id == series_id)
+        self.get_table(series_id).truncate()
 
     def shuffle_players_for_series(
         self,
@@ -170,18 +157,15 @@ class TablesTable:
 
         self.clear_for_series(series_id)
         for i, ps in enumerate(tables, 1):
-            self.add(series_id, i, *ps.index)
+            self.add(series_id, *ps.index)
 
     def get_table_with_player(self, series_id: int, player_id: int) -> Table:
         q = Query()
-        table = self._table.get(
-            (q.series_id == series_id)
-            & (
-                (q.player1_id == player_id)
-                | (q.player2_id == player_id)
-                | (q.player3_id == player_id)
-                | (q.player4_id == player_id)
-            )
+        table = self.get_table(series_id).get(
+            (q.player1_id == player_id)
+            | (q.player2_id == player_id)
+            | (q.player3_id == player_id)
+            | (q.player4_id == player_id)
         )
 
         if not table:

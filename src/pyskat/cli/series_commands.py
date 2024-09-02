@@ -242,7 +242,7 @@ def shuffle_tables(
     if not series_id:
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
 
-    old = backend.tables.all_for_series(series_id)
+    old = backend.tables.all(series_id)
     if old:
         if not click.confirm(
             "There is already a player-to-table distribution for this series. Proceeding will overwrite that."
@@ -267,7 +267,7 @@ def list_tables(backend: Backend, current_series: CurrentSeries, series_id: int 
 
 
 def print_series_table(backend: Backend, id: int):
-    df = to_pandas(backend.tables.all_for_series(id), Table, ["table_id"])
+    df = to_pandas(backend.tables.all(id), Table, ["table_id"])
     df.drop("series_id", axis=1, inplace=True)
 
     all_players = to_pandas(backend.players.all(), Player, "id")

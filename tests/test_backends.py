@@ -36,10 +36,10 @@ def backend(tmp_path):
     backend.results.add(2, 6, 240, 2, 0)
     backend.results.add(2, 4, 100, 2, 0)
 
-    backend.tables.add(1, 1, 2, 4, 6, 7)
-    backend.tables.add(1, 2, 1, 3, 5)
-    backend.tables.add(2, 1, 1, 3, 4, 7)
-    backend.tables.add(2, 2, 2, 5, 6)
+    backend.tables.add(1, 2, 4, 6, 7)
+    backend.tables.add(1, 1, 3, 5)
+    backend.tables.add(2, 1, 3, 4, 7)
+    backend.tables.add(2, 2, 5, 6)
 
     backend.series.add("Nr1", "2024-02-04", "")
     backend.series.add("Nr2", "2024-02-05", "")
@@ -164,7 +164,7 @@ def test_shuffle_players_to_tables_default(backend: Backend):
 
     assert len(backend.tables.get(1, 1).player_ids) == 3
     assert len(backend.tables.get(1, 2).player_ids) == 3
-    assert len(backend.tables.all_for_series(1)) == 2
+    assert len(backend.tables.all(1)) == 2
 
 
 def test_shuffle_players_to_tables_inactive_also(backend: Backend):
@@ -172,7 +172,7 @@ def test_shuffle_players_to_tables_inactive_also(backend: Backend):
 
     assert len(backend.tables.get(1, 1).player_ids) == 4
     assert len(backend.tables.get(1, 2).player_ids) == 3
-    assert len(backend.tables.all_for_series(1)) == 2
+    assert len(backend.tables.all(1)) == 2
 
 
 def test_shuffle_players_to_tables_include(backend: Backend):
@@ -180,21 +180,21 @@ def test_shuffle_players_to_tables_include(backend: Backend):
 
     assert len(backend.tables.get(1, 1).player_ids) == 4
     assert len(backend.tables.get(1, 2).player_ids) == 3
-    assert len(backend.tables.all_for_series(1)) == 2
+    assert len(backend.tables.all(1)) == 2
 
 
 def test_shuffle_players_to_tables_include_only(backend: Backend):
     backend.tables.shuffle_players_for_series(1, include_only=[7, 5, 6])
 
     assert len(backend.tables.get(1, 1).player_ids) == 3
-    assert len(backend.tables.all_for_series(1)) == 1
+    assert len(backend.tables.all(1)) == 1
 
 
 def test_shuffle_players_to_tables_exclude(backend: Backend):
     backend.tables.shuffle_players_for_series(1, exclude=[5, 6])
 
     assert len(backend.tables.get(1, 1).player_ids) == 4
-    assert len(backend.tables.all_for_series(1)) == 1
+    assert len(backend.tables.all(1)) == 1
 
 
 def test_update_series(backend: Backend):
