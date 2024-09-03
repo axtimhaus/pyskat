@@ -13,12 +13,13 @@ def index(series_id):
 
     if series_id:
         tables_list = g.backend.tables.all(series_id)
+        results = g.backend.results.all_for_series(series_id)
     else:
         flash("Please select a series on the series page to use this page.", "warning")
         tables_list = []
+        results = []
 
     players=g.backend.players.all()
-    results=g.backend.results.all_for_series(series_id)
     series = g.backend.series.get(series_id)
 
     return render_template(
