@@ -141,3 +141,30 @@ def flash_player_multiply_present_in_table(table_id: int, player_id: int):
 def flash_player_multiply_present_in_series(table_id: int, player_id: int):
     player = g.backend.players.get(player_id)
     flash(f"Player {player.name} ({player.id}) is defined multiple times in series (duplicate at table {table_id}).", "warning")
+
+
+@bp.post("/shuffle", defaults=dict(series_id=None))
+@bp.post("/shuffle/<int:series_id>")
+def shuffle(series_id):
+    series_id = series_id or session.get("current_series", None)
+
+    try:
+        include = [int(e) for e in request.form.getlist("include")]
+        exclude = [int(e) for e in request.form.getlist("exclude")]
+        include_only = [int(e) for e in request.form.getlist("include_only")]
+        active_only = request.form.get("active_only", False, bool)
+    except KeyError:
+        abort(400, description="Invalid form data submitted.")
+
+    try:
+        g.backend.tables.shuffle_players_for_series(
+            series_id=series_id,
+            active_only=active_only,
+            include=include,
+            exclude=exclude,
+            include_only=include_only,
+        )
+    except ValueError as e:
+        flash(str(e), "danger")
+
+    return redirect_to_index(series_id)

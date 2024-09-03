@@ -125,7 +125,7 @@ class TablesTable:
     ):
         players = to_pandas(self._backend.players.all(), Player, "id")
 
-        if include_only is not None:
+        if include_only:
             selector = players.index.isin(include_only)
         else:
             selector = np.full(len(players.index), True)
@@ -140,6 +140,12 @@ class TablesTable:
                 selector = selector & np.logical_not(players.index.isin(exclude))
 
         shuffled = players[selector].sample(frac=1)
+
+        if len(shuffled) < 3:
+            raise ValueError("At least 3 players must be selected to create a table.")
+
+        if len(shuffled) == 5:
+            raise ValueError("It is impossible to create tables out of 5 players.")
 
         player_count = len(shuffled)
         div, mod = divmod(player_count, 4)
