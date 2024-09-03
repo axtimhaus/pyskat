@@ -107,3 +107,37 @@ def redirect_to_index(series_id):
     if series_id == session.get("current_series"):
         series_id = None
     return redirect(url_for("tables.index", series_id=series_id))
+
+
+@bp.get("/check", defaults=dict(series_id=None))
+@bp.get("/check/<int:series_id>")
+def check(series_id):
+    series_id = series_id or session.get("current_series", None)
+    tables = g.backend.tables.all(series_id)
+
+    series_players = []
+
+    for t in tables:
+        table_players = []
+
+        for p in t.player_ids:
+            if p in table_players:
+                flash_player_multiply_present_in_table(t.table_id, p)
+            else:
+                table_players.append(p)
+            if p in series_players:
+                flash_player_multiply_present_in_series(t.table_id, p)
+            else:
+                series_players.append(p)
+
+    return redirect_to_index(series_id)
+
+
+def flash_player_multiply_present_in_table(table_id: int, player_id: int):
+    player = g.backend.players.get(player_id)
+    flash(f"Player {player.name} ({player.id}) is defined multiple times at table {table_id}.", "warning")
+
+
+def flash_player_multiply_present_in_series(table_id: int, player_id: int):
+    player = g.backend.players.get(player_id)
+    flash(f"Player {player.name} ({player.id}) is defined multiple times in series (duplicate at table {table_id}).", "warning")

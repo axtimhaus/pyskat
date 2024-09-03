@@ -12,6 +12,14 @@
 {% block content %}
     <h1>Tables</h1>
 
+
+    <div class="btn-group">
+        <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                data-bs-target="#modal-add-table">Add Table
+        </button>
+        <a class="btn btn-primary" href="{{ url_for("tables.check", series_id=series.id) }}">Check Validity</a>
+    </div>
+
     <div class="mt-5">
         <table class="table">
             <thead>
@@ -52,13 +60,57 @@
             </tbody>
         </table>
 
+        <div class="modal fade" id="modal-add-table" tabindex="-1"
+             aria-labelledby="modal-add-table-label" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="modal-add-table">Add Table</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="form-add-table" method="post"
+                              action="{{ url_for("tables.add", series_id=series.id) }}">
+                            {% macro player_select(player_id) %}
+                                {% set input_id = "player{}_id".format(player_id) %}
+                                <div class="mb-3">
+                                    <label for="{{ input_id }}" class="form-label">Player #{{ player_id }}</label>
+                                    <select id="{{ input_id }}" name="{{ input_id }}" class="form-select">
+                                        <option value="-1" selected>-- Select Player --</option>
+                                        {% if player_id == 4 %}<option value="0">-- None --</option>{% endif %}
+                                        {% for p in players.values() %}
+                                            <option value="{{ p.id }}">{{ p.name }} ({{ p.id }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            {% endmacro %}
+                            {{ player_select(1) }}
+                            {{ player_select(2) }}
+                            {{ player_select(3) }}
+                            {{ player_select(4) }}
+                            <div>
+                                <label for="remarks" class="form-label">Remarks</label>
+                                <input id="remarks" name="remarks" type="text" value=""
+                                       class="form-control"/>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <input type="submit" form="form-add-table" class="btn btn-success"
+                               value="Add"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {% for t in tables %}
             <div class="modal fade" id="modal-update-table-{{- t.table_id -}}" tabindex="-1"
                  aria-labelledby="modal-update-table-{{- t.table_id -}}-label" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="modal-update-table-{{- t.table_id -}}">Edit Player</h1>
+                            <h1 class="modal-title fs-5" id="modal-update-table-{{- t.table_id -}}">Edit Table</h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
@@ -100,7 +152,7 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="modal-remove-table-{{- t.table_id -}}">Remove Player</h1>
+                            <h1 class="modal-title fs-5" id="modal-remove-table-{{- t.table_id -}}">Remove Table</h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
