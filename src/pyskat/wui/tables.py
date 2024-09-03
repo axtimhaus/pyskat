@@ -115,6 +115,7 @@ def check(series_id):
     series_id = series_id or session.get("current_series", None)
     tables = g.backend.tables.all(series_id)
 
+    is_valid = True
     series_players = []
 
     for t in tables:
@@ -123,13 +124,17 @@ def check(series_id):
         for p in t.player_ids:
             if p in table_players:
                 flash_player_multiply_present_in_table(t.table_id, p)
+                is_valid = False
             else:
                 table_players.append(p)
             if p in series_players:
                 flash_player_multiply_present_in_series(t.table_id, p)
+                is_valid = False
             else:
                 series_players.append(p)
 
+    if is_valid:
+        flash("Current table distribution is valid.", "success")
     return redirect_to_index(series_id)
 
 
