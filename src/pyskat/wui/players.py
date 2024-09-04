@@ -21,13 +21,14 @@ def add():
     try:
         name = request.form["name"]
         remarks = request.form["remarks"]
+        active = request.form.get("active", False, bool)
     except KeyError:
         abort(400, description="Invalid form data submitted.")
 
     try:
         g.backend.players.add(
             name=name,
-            active=True,
+            active=active,
             remarks=remarks,
         )
     except ValidationError as e:
