@@ -38,7 +38,7 @@ class TablesTable:
             remarks=remarks,
         )
 
-        table.insert(model.model_dump(mode="json", exclude={"table_id"}))
+        table.insert(model.model_dump(mode="json", exclude={"table_id", "series_id"}))
         return model
 
     def update(
@@ -66,9 +66,9 @@ class TablesTable:
             player4_id=player4_id,
             remarks=remarks,
         )
-        model = Table(**updated)
+        model = Table(series_id=series_id, table_id=table_id, **updated)
 
-        table.update(model.model_dump(mode="json"), doc_ids=[table_id])
+        table.update(model.model_dump(mode="json", exclude={"table_id", "series_id"}), doc_ids=[table_id])
         return table
 
     def remove(
@@ -94,21 +94,21 @@ class TablesTable:
         if not result:
             raise_table_not_found(series_id, table_id)
 
-        result = Table(id=table_id, **result)
+        result = Table(series_id=series_id, table_id=table_id, **result)
         return result
 
     def query(self, series_id: int, query: QueryLike) -> list[Table]:
         """Get the tables of a TinyDB query."""
         table = self.get_table(series_id)
         result = table.search(query)
-        tables = [Table(id=p.doc_id, **p) for p in result]
+        tables = [Table(series_id=series_id, table_id=p.doc_id, **p) for p in result]
         return tables
 
     def all(self, series_id: int) -> list[Table]:
         """Get all the tables for a defined series in the database."""
         table = self.get_table(series_id)
-        tables = table.search(Query().series_id == series_id)
-        tables = [Table(id=p.doc_id, **p) for p in tables]
+        tables = table.all()
+        tables = [Table(series_id=series_id, table_id=p.doc_id, **p) for p in tables]
         return tables
 
     def clear_for_series(self, series_id: int) -> None:
@@ -125,7 +125,7 @@ class TablesTable:
     ):
         players = to_pandas(self._backend.players.all(), Player, "id")
 
-        if include_only is not None:
+        if include_only:
             selector = players.index.isin(include_only)
         else:
             selector = np.full(len(players.index), True)
@@ -140,6 +140,12 @@ class TablesTable:
                 selector = selector & np.logical_not(players.index.isin(exclude))
 
         shuffled = players[selector].sample(frac=1)
+
+        if len(shuffled) < 3:
+            raise ValueError("At least 3 players must be selected to create a table.")
+
+        if len(shuffled) == 5:
+            raise ValueError("It is impossible to create tables out of 5 players.")
 
         player_count = len(shuffled)
         div, mod = divmod(player_count, 4)
@@ -171,7 +177,7 @@ class TablesTable:
         if not table:
             raise ValueError(f"A table with player {player_id} is not present in series {series_id}.")
 
-        return Table(**table)
+        return Table(series_id=series_id, table_id=table.doc_id, **table)
 
 
 def raise_table_not_found(series_id: int, table_id: int):

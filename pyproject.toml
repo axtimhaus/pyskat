@@ -29,6 +29,7 @@ dependencies = [
     "numpy ~= 1.26",
     "tinydb ~= 4.0",
     "pydantic ~= 2.8",
+    "flask ~= 3.0",
 ]
 
 [project.optional-dependencies]

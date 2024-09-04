@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% from "macros.html" import modal_editor, modal_editor_open, player_name_id %}
+{% block title %}PySkat - Tables{% endblock %}
+{% block head %}{% endblock %}
+
+{% macro player_display(id) %}
+    <td>{{ id }}</td>
+    <td>{{ players[id].name }}</td>
+{% endmacro %}
+
+{% block content %}
+    <h1>Tables</h1>
+
+
+    <div class="btn-group">
+        {{ modal_editor_open("add-table", "Add New Table", "success") }}
+        {{ modal_editor_open("shuffle-tables", "Shuffle Players to Tables", "warning") }}
+        <a class="btn btn-primary" href="{{ url_for("tables.check", series_id=series.id) }}">Check Validity</a>
+    </div>
+
+    {% call modal_editor("add-table", url_for("tables.add", series_id=series.id), "Add New Table", submit_label="Add", submit_color="success") %}
+        {% macro player_select(player_id) %}
+            {% set input_id = "player{}_id".format(player_id) %}
+            <div class="mb-3">
+                <label for="{{ input_id }}" class="form-label">Player #{{ player_id }}</label>
+                <select id="{{ input_id }}" name="{{ input_id }}" class="form-select">
+                    <option value="-1" selected>-- Select Player --</option>
+                    {% if player_id == 4 %}
+                        <option value="0">-- None --</option>{% endif %}
+                    {% for p in players.values() %}
+                        <option value="{{ p.id }}">{{ p.name }} ({{ p.id }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endmacro %}
+        {{ player_select(1) }}
+        {{ player_select(2) }}
+        {{ player_select(3) }}
+        {{ player_select(4) }}
+        <div>
+            <label for="remarks" class="form-label">Remarks</label>
+            <input id="remarks" name="remarks" type="text" value=""
+                   class="form-control"/>
+        </div>
+    {% endcall %}
+
+    {% call modal_editor("shuffle-tables", url_for("tables.shuffle", series_id=series.id), "Shuffle Players to Tables", submit_label="Shuffle", submit_color="warning") %}
+        {% macro player_select(name, label) %}
+            <div class="mb-3">
+                <label class="form-label h5 mt-3">{{ label }}</label>
+                {% for p in players.values() %}
+                    <div class="form-check">
+                        <input id="{{ name }}{{ p.id }}" name="{{ name }}" type="checkbox"
+                               class="form-check-input" value="{{ p.id }}"/>
+                        <label for="{{ name }}{{ p.id }}" class="form-check-label">{{ p.name }}
+                            ({{ p.id }})</label>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endmacro %}
+        <div class="mt-3 form-check">
+            <input id="active_only" name="active_only" type="checkbox" checked
+                   class="form-check-input"/>
+            <label for="active_only" class="form-check-label">Include only active players</label>
+        </div>
+        {{ player_select("include", "Include Players Specifically") }}
+        {{ player_select("exclude", "Exclude Players Specifically") }}
+        {{ player_select("include_only", "Include Only These Players") }}
+    {% endcall %}
+
+    <div class="mt-5">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Player ID</th>
+                <th>Player Name</th>
+                <th>Remarks</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for t in tables %}
+                {% set player_count = t.player_ids|length %}
+                <tr>
+                    <td rowspan="{{ player_count }}">{{ t.table_id }}</td>
+                    {{ player_display(t.player1_id) }}
+                    <td rowspan="{{ player_count }}">{{ t.remarks }}</td>
+                    <td rowspan="{{ player_count }}">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal"
+                                    data-bs-target="#modal-update-table-{{- t.table_id -}}">Edit
+                            </button>
+                            <button type="button" class="btn btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modal-remove-table-{{- t.table_id -}}">Remove
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>{{ player_display(t.player2_id) }}</tr>
+                <tr>{{ player_display(t.player3_id) }}</tr>
+                {% if t.player4_id %}
+                    <tr>{{ player_display(t.player4_id) }}</tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+
+        {% for t in tables %}
+            <div class="modal fade" id="modal-update-table-{{- t.table_id -}}" tabindex="-1"
+                 aria-labelledby="modal-update-table-{{- t.table_id -}}-label" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="modal-update-table-{{- t.table_id -}}">Edit Table</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="form-update-table-{{- t.table_id -}}" method="post"
+                                  action="{{ url_for("tables.update", series_id=series.id, table_id=t.table_id) }}">
+                                {% macro player_select(player_id) %}
+                                    {% set input_id = "player{}_id".format(player_id) %}
+                                    <div class="mb-3">
+                                        <label for="{{ input_id }}" class="form-label">Player #{{ player_id }}</label>
+                                        <select id="{{ input_id }}" name="{{ input_id }}" class="form-select">
+                                            {% if player_id == 4 %}
+                                                <option value="0" {% if t[input_id] == 0 %}selected{% endif %}>-- None
+                                                    --
+                                                </option>{% endif %}
+                                            {% for p in players.values() %}
+                                                <option value="{{ p.id }}"
+                                                        {% if t[input_id] == p.id %}selected{% endif %}>{{ p.name }}
+                                                    ({{ p.id }})
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                {% endmacro %}
+                                {{ player_select(1) }}
+                                {{ player_select(2) }}
+                                {{ player_select(3) }}
+                                {{ player_select(4) }}
+                                <div>
+                                    <label for="remarks" class="form-label">Remarks</label>
+                                    <input id="remarks" name="remarks" type="text" value="{{- t.remarks -}}"
+                                           class="form-control"/>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <input type="submit" form="form-update-table-{{- t.table_id -}}" class="btn btn-warning"
+                                   value="Edit"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="modal-remove-table-{{- t.table_id -}}" tabindex="-1"
+                 aria-labelledby="modal-remove-table-{{- t.table_id -}}-label" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="modal-remove-table-{{- t.table_id -}}">Remove Table</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Really remove the table <strong>{{- t.name -}}</strong> with the ID
+                            <strong>{{- t.table_id -}}</strong>?
+                            <form id="form-remove-table-{{- t.table_id -}}" method="post"
+                                  action="{{ url_for("tables.remove", series_id=series.id, table_id=t.table_id) }}"></form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <input type="submit" form="form-remove-table-{{- t.table_id -}}" class="btn btn-danger"
+                                   value="Remove"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

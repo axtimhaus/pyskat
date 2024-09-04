@@ -250,7 +250,11 @@ def shuffle_tables(
             return
 
     backend.tables.shuffle_players_for_series(
-        series_id, active_only=active_only, include=include or None, exclude=exclude or None, include_only=include_only or None
+        series_id,
+        active_only=active_only,
+        include=include or None,
+        exclude=exclude or None,
+        include_only=include_only or None,
     )
     print_series_table(backend, series_id)
 

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% from "macros.html" import modal_editor, modal_editor_open %}
+{% block title %}PySkat - Players{% endblock %}
+{% block head %}{% endblock %}
+{% block content %}
+    <h1>Players</h1>
+
+    {{ modal_editor_open("add-player", "Add New Player", "success") }}
+    {% call modal_editor("add-player", url_for("players.add"), "Add New Player", submit_label="Add", submit_color="success") %}
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input id="name" name="name" type="text" value="" class="form-control"/>
+        </div>
+        <div class="mt-3 form-check">
+            <input id="active" name="active" type="checkbox" class="form-check-input" checked/>
+            <label for="active" class="form-check-label">Is Active</label>
+        </div>
+        <div class="mb-3">
+            <label for="remarks" class="form-label">Remarks</label>
+            <input id="remarks" name="remarks" type="text" value=""
+                   class="form-control"/>
+        </div>
+    {% endcall %}
+
+    <div class="mt-5">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Is Active</th>
+                <th>Remarks</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for p in players %}
+                <tr>
+                    <td>{{ p.id }}</td>
+                    <td>{{ p.name }}</td>
+                    <td>{% if p.active %}<i class="bi-check-circle text-success"></i>{% else %}<i class="bi-x-circle text-danger"></i>{% endif %}</td>
+                    <td>{{ p.remarks }}</td>
+                    <td>
+                        <div class="btn-group">
+                            {{ modal_editor_open("edit-player-{}".format(p.id), "Edit", "warning") }}
+                            {{ modal_editor_open("remove-player-{}".format(p.id), "Remove", "danger") }}
+                        </div>
+                        {% call modal_editor("edit-player-{}".format(p.id), url_for("players.update", id=p.id), "Edit Player", "Edit", "warning") %}
+                            <div>
+                                <label for="name" class="form-label">Name</label>
+                                <input id="name" name="name" type="text" value="{{- p.name -}}"
+                                       class="form-control"/>
+                            </div>
+                            <div class="mt-3 form-check">
+                                <input id="active" name="active" type="checkbox" {% if p.active %}checked{% endif %}
+                                       class="form-check-input"/>
+                                <label for="active" class="form-check-label">Is Active</label>
+                            </div>
+                            <div class="mt-3">
+                                <label for="remarks" class="form-label">Remarks</label>
+                                <input id="remarks" name="remarks" type="text" value="{{- p.remarks -}}"
+                                       class="form-control"/>
+                            </div>
+                        {% endcall %}
+                        {% call modal_editor("remove-player-{}".format(p.id), url_for("players.remove", id=p.id), "Remove Player", "Remove", "danger") %}
+                            Really remove the player <strong class="text-danger">{{- p.name -}}</strong> with the ID
+                            <strong class="text-danger">{{- p.id -}}</strong>?
+                        {% endcall %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

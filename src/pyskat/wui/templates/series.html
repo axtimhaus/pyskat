@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% from "macros.html" import modal_editor, modal_editor_open %}
+{% block title %}PySkat - Series{% endblock %}
+{% block head %}
+{% endblock %}
+{% block content %}
+    <h1>Series</h1>
+
+    {{ modal_editor_open("add-series", "Add New Series", "success") }}
+    {% call modal_editor("add-series", url_for("series.add"), "Add New Series", submit_label="Add", submit_color="success") %}
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input id="name" name="name" type="text" value="" class="form-control"/>
+        </div>
+        <div class="mb-3">
+            <label for="date" class="form-label">Date</label>
+            <input id="date" name="date" type="text" value="{{- now -}}" class="form-control"/>
+        </div>
+        <div class="mb-3">
+            <label for="remarks" class="form-label">Remarks</label>
+            <input id="remarks" name="remarks" type="text" value="" class="form-control"/>
+        </div>
+    {% endcall %}
+
+    <div class="mt-5">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Remarks</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for p in series %}
+                <tr>
+                    <td>{{ p.id }}</td>
+                    <td>{{ p.name }}</td>
+                    <td>{{ p.date.isoformat(sep=" ", timespec="minutes") }}</td>
+                    <td>{{ p.remarks }}</td>
+                    <td>
+                        <div class="btn-group">
+                            {% if session.current_series == p.id %}
+                                <button class="btn btn-success" disabled>Current</button>
+                            {% else %}
+                                <input type="submit" form="form-set-series-{{- p.id -}}" class="btn btn-primary"
+                                       value="Set Current"/>
+                            {% endif %}
+                            <a class="btn btn-primary" href="{{ url_for("tables.index", series_id=p.id) }}">View Tables</a>
+                            {{ modal_editor_open("edit-series-{}".format(p.id), "Edit", "warning") }}
+                            {{ modal_editor_open("remove-series-{}".format(p.id), "Remove", "danger") }}
+                        </div>
+                        {% call modal_editor("edit-series-{}".format(p.id), url_for("series.update", id=p.id), "Edit Series", "Edit", "warning") %}
+                            <div>
+                                <label for="name" class="form-label">Name</label>
+                                <input id="name" name="name" type="text" value="{{- p.name -}}"
+                                       class="form-control"/>
+                            </div>
+                            <div class="mt-3">
+                                <label for="date" class="form-label">Date</label>
+                                <input id="date" name="date" type="text" value="{{- p.date -}}"
+                                       class="form-control"/>
+                            </div>
+                            <div class="mt-3">
+                                <label for="remarks" class="form-label">Remarks</label>
+                                <input id="remarks" name="remarks" type="text" value="{{- p.remarks -}}"
+                                       class="form-control"/>
+                            </div>
+                        {% endcall %}
+                        {% call modal_editor("remove-series-{}".format(p.id), url_for("series.remove", id=p.id), "Remove Series", "Remove", "danger") %}
+                            Really remove the series <strong class="text-danger">{{- p.name -}}</strong> with the ID
+                            <strong class="text-danger">{{- p.id -}}</strong>?
+                        {% endcall %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
