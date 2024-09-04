@@ -177,7 +177,7 @@ class TablesTable:
         if not table:
             raise ValueError(f"A table with player {player_id} is not present in series {series_id}.")
 
-        return Table(**table)
+        return Table(series_id=series_id, table_id=table.doc_id, **table)
 
 
 def raise_table_not_found(series_id: int, table_id: int):
