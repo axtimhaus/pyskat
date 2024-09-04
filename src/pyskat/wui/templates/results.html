@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% from "macros.html" import modal_editor, modal_editor_open, player_name_id %}
+{% block title %}PySkat - Results{% endblock %}
+{% block head %}{% endblock %}
+
+{% macro player_display(id) %}
+    <td>{{ id }}</td>
+    <td>{{ players[id].name }}</td>
+    {% if id in results %}
+        {% set r = results[id] %}
+        <td>{{ r.points }}</td>
+        <td>{{ r.won }}</td>
+        <td>{{ r.lost }}</td>
+        <td>{{ r.remarks }}</td>
+        <td>
+            <div class="btn-group">
+                {{ modal_editor_open("edit-result-{}".format(id), "Edit", "warning") }}
+                {{ modal_editor_open("remove-result-{}".format(id), "Remove", "danger") }}
+            </div>
+            {% call modal_editor("edit-result-{}".format(id), url_for("results.update", series_id=series.id, player_id=id), "Edit Result", submit_label="Edit", submit_color="warning") %}
+                <div>
+                    <label for="points" class="form-label">Sum of Game Points</label>
+                    <input id="points" name="points" type="number" value="{{ r.points }}"
+                           class="form-control"/>
+                </div>
+                <div>
+                    <label for="won" class="form-label">Count of Won Games</label>
+                    <input id="won" name="won" type="number" min="0" value="{{ r.won }}"
+                           class="form-control"/>
+                </div>
+                <div>
+                    <label for="lost" class="form-label">Count of Lost Games</label>
+                    <input id="lost" name="lost" type="number" min="0" value="{{ r.lost }}"
+                           class="form-control"/>
+                </div>
+                <div>
+                    <label for="remarks" class="form-label">Remarks</label>
+                    <input id="remarks" name="remarks" type="text" value="{{ r.remarks }}"
+                           class="form-control"/>
+                </div>
+            {% endcall %}
+            {% call modal_editor("remove-result-{}".format(id), url_for("results.remove", series_id=series.id, player_id=id), "Remove Result", submit_label="Remove", submit_color="danger") %}
+                Really remove the result for player <strong class="text-danger">{{ player_name_id(players[r.player_id]) }}</strong>?
+            {% endcall %}
+        </td>
+    {% else %}
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>
+            {{ modal_editor_open("add-result-{}".format(id), "Add Result", "success") }}
+
+            {% call modal_editor("add-result-{}".format(id), url_for("results.add", series_id=series.id, player_id=id), "Add Result", submit_label="Add", submit_color="success") %}
+                <div>
+                    <label for="points" class="form-label">Sum of Game Points</label>
+                    <input id="points" name="points" type="number" value="0"
+                           class="form-control"/>
+                </div>
+                <div>
+                    <label for="won" class="form-label">Count of Won Games</label>
+                    <input id="won" name="won" type="number" min="0" value="0"
+                           class="form-control"/>
+                </div>
+                <div>
+                    <label for="lost" class="form-label">Count of Lost Games</label>
+                    <input id="lost" name="lost" type="number" min="0" value="0"
+                           class="form-control"/>
+                </div>
+                <div>
+                    <label for="remarks" class="form-label">Remarks</label>
+                    <input id="remarks" name="remarks" type="text" value=""
+                           class="form-control"/>
+                </div>
+            {% endcall %}
+        </td>
+    {% endif %}
+{% endmacro %}
+
+{% block content %}
+    <h1>Results</h1>
+
+    <div class="mt-3">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Table ID</th>
+                <th>Player ID</th>
+                <th>Player Name</th>
+                <th>Points</th>
+                <th>Won</th>
+                <th>Lost</th>
+                <th>Remarks</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for t in tables %}
+                {% set player_count = t.player_ids|length %}
+                <tr>
+                    <td rowspan="{{ player_count }}">{{ t.table_id }}</td>
+                    {{ player_display(t.player1_id) }}
+                </tr>
+                <tr>{{ player_display(t.player2_id) }}</tr>
+                <tr>{{ player_display(t.player3_id) }}</tr>
+                {% if t.player4_id %}
+                    <tr>{{ player_display(t.player4_id) }}</tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

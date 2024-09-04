@@ -3,9 +3,32 @@ from pydantic import ValidationError
 from .helpers import flash_validation_error
 from flask import render_template, g, request, Blueprint, abort, redirect, url_for, flash, session
 
-from ..cli.player_commands import player
-
 bp = Blueprint("results", __name__, url_prefix="/results")
+
+
+@bp.get("/", defaults=dict(series_id=None))
+@bp.get("/<int:series_id>")
+def index(series_id):
+    series_id = series_id or session.get("current_series", None)
+
+    if series_id:
+        tables_list = g.backend.tables.all(series_id)
+        results = g.backend.results.all_for_series(series_id)
+    else:
+        flash("Please select a series on the series page to use this page.", "warning")
+        tables_list = []
+        results = []
+
+    players=g.backend.players.all()
+    series = g.backend.series.get(series_id)
+
+    return render_template(
+        "results.html",
+        series=series,
+        tables=tables_list,
+        players={p.id: p for p in players},
+        results={r.player_id : r for r in results}
+    )
 
 
 @bp.post("/add/<int:series_id>/<int:player_id>")
@@ -78,7 +101,7 @@ def flash_result_not_found(series_id: int, player_id: int):
 def redirect_to_index(series_id):
     if series_id == session.get("current_series"):
         series_id = None
-    return redirect(url_for("tables.index", series_id=series_id))
+    return redirect(url_for("results.index", series_id=series_id))
 
 
 
