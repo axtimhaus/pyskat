@@ -6,25 +6,27 @@ from ..backend import Backend
 
 
 @hookspec
-def evaluate_results_prepare(backend: Backend, results: pd.DataFrame) -> pd.DataFrame:
+def evaluate_results_prepare(backend: Backend, results: pd.DataFrame) -> pd.DataFrame | pd.Series:
     """
     Evaluates results by adding new columns to the given frame.
     The given data frame can be directly updated, as each hook implementation receives its own copy.
     The result data frames will be merged afterwards.
+    Given and returned data are/must be indexed first on ``series_id`` and then on ``player_id``.
 
     :param backend: the current backend for acquisition of additional data
-    :param results: a data frame with the respective results
+    :param results: a data frame or series with the respective results
     :return: the given data frame updated with evaluation data
     """
 
 
 @hookspec
-def evaluate_results_main(backend: Backend, results: pd.DataFrame) -> pd.DataFrame:
+def evaluate_results_main(backend: Backend, results: pd.DataFrame) -> pd.DataFrame | pd.Series:
     """
     Evaluates results by adding new columns to the given frame.
     The given data frame can be directly updated, as each hook implementation receives its own copy.
     The result data frames will be merged afterwards.
     The given data frame will include the modifications of ``evaluate_results_prepare`` calls.
+    Given and returned data are/must be indexed first on ``series_id`` and then on ``player_id``.
 
     :param backend: the current backend for acquisition of additional data
     :param results: a data frame with the respective results
@@ -33,12 +35,27 @@ def evaluate_results_main(backend: Backend, results: pd.DataFrame) -> pd.DataFra
 
 
 @hookspec
-def evaluate_results_revise(backend: Backend, results: pd.DataFrame) -> pd.DataFrame:
+def evaluate_results_revise(backend: Backend, results: pd.DataFrame) -> pd.DataFrame | pd.Series:
     """
     Evaluates results by adding new columns to the given frame.
     The given data frame can be directly updated, as each hook implementation receives its own copy.
     The result data frames will be merged afterwards.
     The given data frame will include the modifications of ``evaluate_results_main`` calls.
+    Given and returned data are/must be indexed first on ``series_id`` and then on ``player_id``.
+
+    :param backend: the current backend for acquisition of additional data
+    :param results: a data frame with the respective results
+    :return: the given data frame updated with evaluation data
+    """
+
+
+@hookspec
+def evaluate_results_total(backend: Backend, results: pd.DataFrame) -> pd.DataFrame | pd.Series:
+    """
+    Aggregate the result evaluation over all series.
+    Given data are indexed first on ``series_id`` and then on ``player_id``.
+    Returned data must be indexed on ``player_id`` only (``series_id`` has been aggregated).
+    The result data frames will be merged afterwards.
 
     :param backend: the current backend for acquisition of additional data
     :param results: a data frame with the respective results

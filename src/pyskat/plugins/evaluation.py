@@ -40,3 +40,25 @@ def sum_score(backend: Backend, results: pd.DataFrame) -> pd.DataFrame:
 def add_player_names(backend: Backend, results: pd.DataFrame) -> pd.DataFrame:
     results["player_name"] = results.apply(lambda row: backend.players.get(row.name[1]).name, axis=1)
     return results
+
+
+@hookimpl(specname="evaluate_results_total")
+def total_points_and_score(backend: Backend, results: pd.DataFrame) -> pd.DataFrame:
+    total = (
+        results.loc[
+            :,
+            ["points", "won", "won_points", "lost", "lost_points", "opponents_lost", "opponents_lost_points", "score"],
+        ]
+        .groupby("player_id")
+        .agg("sum")
+    )
+    return total
+
+
+@hookimpl(specname="evaluate_results_total")
+def total_player_names(backend: Backend, results: pd.DataFrame) -> pd.DataFrame | pd.Series:
+    return pd.Series(
+        [backend.players.get(p).name for p in results.index.levels[1]],
+        index=results.index.levels[1],
+        name="player_name",
+    )

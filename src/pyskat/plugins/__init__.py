@@ -10,6 +10,7 @@ plugin_manager.add_hookspecs(specs)
 
 plugin_manager.register(evaluation)
 
+
 def evaluate_results(backend: Backend, series_id: int | None) -> pd.DataFrame:
     if series_id:
         results = backend.results.all_for_series(series_id)
@@ -31,6 +32,11 @@ def evaluate_results(backend: Backend, series_id: int | None) -> pd.DataFrame:
     df = df.join(_remove_input_cols(df, plugin_manager.hook.evaluate_results_revise(backend=backend, results=df)))
 
     return df
+
+
+def evaluate_results_total(backend: Backend, results: pd.DataFrame) -> pd.DataFrame:
+    df = pd.DataFrame(index=results.index.levels[1])
+    return df.join(plugin_manager.hook.evaluate_results_total(backend=backend, results=results))
 
 
 def create_result_plots(backend: Backend, results: pd.DataFrame) -> list[go.Figure]:
