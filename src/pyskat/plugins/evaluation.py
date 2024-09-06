@@ -34,3 +34,9 @@ def sum_score(backend: Backend, results: pd.DataFrame) -> pd.DataFrame:
         results["points"] + results["won_points"] + results["lost_points"] + results["opponents_lost_points"]
     )
     return results
+
+
+@hookimpl(specname="evaluate_results_revise")
+def add_player_names(backend: Backend, results: pd.DataFrame) -> pd.DataFrame:
+    results["player_name"] = results.apply(lambda row: backend.players.get(row.name[1]).name, axis=1)
+    return results

@@ -41,6 +41,7 @@ def evaluate(backend: Backend, sort_by: str | None, reverse: bool):
             df = evaluation.loc[ind].copy()
             df.sort_values(sort_by, ascending=reverse, inplace=True)
             df["position"] = np.arange(1, len(df) + 1)
+            df.reset_index(inplace=True)
             df.set_index("position", inplace=True)
             print_pandas_dataframe(df, title)
             console.print()
