@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from .helpers import flash_validation_error
 from flask import render_template, g, request, Blueprint, abort, redirect, url_for, flash
 
-from ..backend import evaluate_total
+from ..plugins import evaluate_results
 
 bp = Blueprint("evaluation", __name__, url_prefix="/evaluation")
 
@@ -14,8 +14,8 @@ def index():
     evaluations = {}
 
     try:
-        evaluation = evaluate_total(g.backend)
-        for ind in evaluation.columns.levels[0]:
+        evaluation = evaluate_results(g.backend, None)
+        for ind in evaluation.index.levels[0]:
             if isinstance(ind, int):
                 series = g.backend.series.get(ind)
                 title = f"Series {ind} - {series.name}"
@@ -24,7 +24,7 @@ def index():
             else:
                 title = None
 
-            df = evaluation[ind].copy()
+            df = evaluation.loc[ind].copy()
             df.sort_values("score", ascending=False, inplace=True)
             df["position"] = np.arange(1, len(df) + 1)
             df.reset_index(inplace=True)

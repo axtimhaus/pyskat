@@ -30,12 +30,15 @@ dependencies = [
     "tinydb ~= 4.0",
     "pydantic ~= 2.8",
     "flask ~= 3.0",
+    "pluggy ~= 1.2",
+    "plotly ~= 5.24",
 ]
 
 [project.optional-dependencies]
 fake = [
     "faker ~= 28.0"
 ]
+
 
 [project.urls]
 Documentation = "https://github.com/axtimhaus/pyskat/blob/main/README.md"

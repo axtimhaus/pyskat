@@ -6,7 +6,8 @@ import numpy as np
 from click import pass_context
 from click.shell_completion import CompletionItem
 
-from ..backend import Backend, evaluate_results
+from ..backend import Backend
+from ..plugins import evaluate_results
 from ..backend.data_model import to_pandas, Series, Table, Player
 from ..rich import console, print_pandas_dataframe
 from .config import APP_DIR
@@ -317,9 +318,8 @@ def evaluate(backend: Backend, current_series: CurrentSeries, series_id: int, so
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
 
     try:
-        df = evaluate_results(backend)
+        df = evaluate_results(backend, series_id)
         df.reset_index(inplace=True)
-        df = df[df.series_id == series_id]
         df.drop("series_id", axis=1, inplace=True)
         df.sort_values(sort_by, ascending=reverse, inplace=True)
         df["position"] = np.arange(1, len(df) + 1)
