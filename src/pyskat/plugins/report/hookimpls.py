@@ -3,11 +3,7 @@ from ..evaluation import evaluate_results, evaluate_results_total
 from ...backend import Backend
 import pandas as pd
 import numpy as np
-from pathlib import Path
-from jinja2 import Environment, FileSystemLoader
-
-THIS_DIR = Path(__file__).parent
-ENV = Environment(loader=FileSystemLoader(THIS_DIR / "templates"))
+from .jinja_config import ENV
 
 @hookimpl(specname="report_results_display")
 def result_table(backend: Backend, results: pd.DataFrame) -> str:
