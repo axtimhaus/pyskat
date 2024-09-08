@@ -1,0 +1,11 @@
+<div class="mt-5">
+<h1>Visualizations of Game Results</h1>
+{% for title, plot in zip(plot_titles, plots) %}
+    <div class="card bg-light mt-3">
+        <div class="card-header">{{ title }}</div>
+        <div class="card-body">
+            {{ plot | safe }}
+        </div>
+    </div>
+{% endfor %}
+</div>

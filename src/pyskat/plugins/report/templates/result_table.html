@@ -1,0 +1,40 @@
+<div class="mt-5">
+<h1>Tables of Evaluated Results</h1>
+{% for key, evaluation in evaluations.items() %}
+<h2 class="mt-5">{{ key }}</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Position</th>
+            <th>Player ID</th>
+            <th>Player Name</th>
+            <th>Points</th>
+            <th>Won</th>
+            <th>Won Points</th>
+            <th>Lost</th>
+            <th>Lost Points</th>
+            <th>Opponents Lost</th>
+            <th>Opponents Lost Points</th>
+            <th>Score</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in evaluation.itertuples() %}
+        <tr>
+            <td>{{ p.Index }}</td>
+            <td>{{ p.player_id }}</td>
+            <td>{{ players[p.player_id].name }}</td>
+            <td>{{ p.points }}</td>
+            <td>{{ p.won }}</td>
+            <td>{{ p.won_points }}</td>
+            <td>{{ p.lost }}</td>
+            <td>{{ p.lost_points }}</td>
+            <td>{{ p.opponents_lost }}</td>
+            <td>{{ p.opponents_lost_points }}</td>
+            <td>{{ p.score }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endfor %}
+</div>
