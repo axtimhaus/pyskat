@@ -13,7 +13,7 @@ pass_backend = click.make_pass_decorator(Backend)
     "-d",
     "--database-file",
     type=click.Path(dir_okay=False, path_type=Path),
-    default=Path("pyskat_db.json"),
+    default=Path("pyskat.db"),
 )
 def main(ctx, database_file: Path):
     ctx.obj = Backend(database_file)

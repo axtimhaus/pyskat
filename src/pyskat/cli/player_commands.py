@@ -15,11 +15,17 @@ def complete_player_id(ctx: click.Context, param, incomplete):
     backend: Backend = ctx.find_object(Backend)
     players = backend.players.all()
 
-    c = [CompletionItem(p.id, help=p.name) for p in players if str(p.id).startswith(str(incomplete))]
+    c = [
+        CompletionItem(p.id, help=p.name)
+        for p in players
+        if str(p.id).startswith(str(incomplete))
+    ]
     return c
 
 
-player_id_argument = click.argument("player_id", type=click.INT, shell_complete=complete_player_id)
+player_id_argument = click.argument(
+    "player_id", type=click.INT, shell_complete=complete_player_id
+)
 
 
 @click.group()
@@ -47,7 +53,7 @@ def player():
 def add(backend: Backend, name: str, remarks: str):
     """Add a new player to database."""
     try:
-        backend.players.add(name, remarks)
+        backend.players.add(name, True, remarks)
     except KeyError:
         console.print_exception()
 
@@ -75,7 +81,9 @@ def update(backend: Backend, player_id: int, name: str | None, remarks: str | No
         if name is None:
             name = click.prompt("Name", default=backend.players.get(player_id).name)
         if remarks is None:
-            remarks = click.prompt("Remarks", default=backend.players.get(player_id).remarks)
+            remarks = click.prompt(
+                "Remarks", default=backend.players.get(player_id).remarks
+            )
 
         backend.players.update(player_id, name, remarks)
     except KeyError:

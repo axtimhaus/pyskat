@@ -10,9 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 keywords = []
-authors = [
-    { name = "Max Weiner", email = "max.weiner@posteo.de" },
-]
+authors = [{ name = "Max Weiner", email = "max.weiner@posteo.de" }]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python",
@@ -27,17 +25,14 @@ dependencies = [
     "pandas ~= 2.2",
     "rich ~= 13.7",
     "numpy ~= 1.26",
-    "tinydb ~= 4.0",
-    "pydantic ~= 2.8",
+    "sqlmodel ~= 0.0.22",
     "flask ~= 3.0",
     "pluggy ~= 1.2",
     "plotly ~= 5.24",
 ]
 
 [project.optional-dependencies]
-fake = [
-    "faker ~= 28.0"
-]
+fake = ["faker ~= 28.0"]
 
 
 [project.urls]
@@ -56,11 +51,9 @@ packages = ["src/pyskat"]
 
 [tool.hatch.envs.default]
 path = ".venv"
-dependencies = [
-    "pytest",
-    "black",
-]
-features = [
-    "fake"
-]
+dependencies = ["pytest", "black"]
+features = ["fake"]
 
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

@@ -23,12 +23,16 @@ def complete_series_id(ctx: click.Context, param, incomplete):
     all_series = backend.series.all()
 
     c = [
-        CompletionItem(s.id, help=f"{s.name} on {s.date}") for s in all_series if str(s.id).startswith(str(incomplete))
+        CompletionItem(s.id, help=f"{s.name} on {s.date}")
+        for s in all_series
+        if str(s.id).startswith(str(incomplete))
     ]
     return c
 
 
-series_id_argument = click.argument("series_id", type=click.INT, shell_complete=complete_series_id, required=False)
+series_id_argument = click.argument(
+    "series_id", type=click.INT, shell_complete=complete_series_id, required=False
+)
 
 
 class CurrentSeries:
@@ -36,16 +40,16 @@ class CurrentSeries:
         self._file = file
         file.parent.mkdir(exist_ok=True)
         try:
-            self._value = int(file.read_text())
+            self._value = int(file.read_text()) or None
         except:
             self._value = None
 
-    def get(self) -> int:
+    def get(self) -> int | None:
         return self._value
 
-    def set(self, id: int):
+    def set(self, id: int | None):
         self._value = id
-        self._file.write_text(str(id))
+        self._file.write_text(str(id or ""))
 
 
 pass_current_series = click.make_pass_decorator(CurrentSeries)
@@ -99,7 +103,7 @@ def add(
     remarks: str,
 ):
     """Create a new series and set it as current."""
-    id = backend.series.add(name, date, remarks)
+    id = backend.series.add(name, date, remarks).id
     current_series.set(id)
 
 
@@ -146,7 +150,9 @@ def update(
         if date is None:
             date = click.prompt("Date", default=backend.series.get(series_id).date)
         if remarks is None:
-            remarks = click.prompt("Remarks", default=backend.series.get(series_id).remarks)
+            remarks = click.prompt(
+                "Remarks", default=backend.series.get(series_id).remarks
+            )
 
         backend.series.update(series_id, name, date, remarks)
     except KeyError:
@@ -243,7 +249,7 @@ def shuffle_tables(
     if not series_id:
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
 
-    old = backend.tables.all(series_id)
+    old = backend.tables.all_for_series(series_id)
     if old:
         if not click.confirm(
             "There is already a player-to-table distribution for this series. Proceeding will overwrite that."
@@ -312,7 +318,13 @@ def print_series_table(backend: Backend, id: int):
 )
 @pass_current_series
 @pass_backend
-def evaluate(backend: Backend, current_series: CurrentSeries, series_id: int, sort_by: str | None, reverse: bool):
+def evaluate(
+    backend: Backend,
+    current_series: CurrentSeries,
+    series_id: int,
+    sort_by: str | None,
+    reverse: bool,
+):
     """Evaluate and display all game results."""
     if not series_id:
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)

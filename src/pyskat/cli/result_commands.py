@@ -1,7 +1,7 @@
 import click
 
 from ..backend import Backend
-from ..backend.data_model import to_pandas, TableResult
+from ..backend.data_model import to_pandas, Result
 from ..rich import console, print_pandas_dataframe
 from .main import pass_backend
 from .player_commands import player_id_argument
@@ -113,13 +113,21 @@ def update(
     """Update an existing game result in database."""
     try:
         if points is None:
-            points = click.prompt("Points", default=backend.results.get(series_id, player_id).points)
+            points = click.prompt(
+                "Points", default=backend.results.get(series_id, player_id).points
+            )
         if won is None:
-            won = click.prompt("Won", default=backend.results.get(series_id, player_id).won)
+            won = click.prompt(
+                "Won", default=backend.results.get(series_id, player_id).won
+            )
         if lost is None:
-            remarks = click.prompt("Lost", default=backend.results.get(series_id, player_id).lost)
+            remarks = click.prompt(
+                "Lost", default=backend.results.get(series_id, player_id).lost
+            )
         if remarks is None:
-            remarks = click.prompt("Remarks", default=backend.results.get(series_id, player_id).remarks)
+            remarks = click.prompt(
+                "Remarks", default=backend.results.get(series_id, player_id).remarks
+            )
 
         backend.results.update(series_id, player_id, points, won, lost, remarks)
     except KeyError:
@@ -164,5 +172,5 @@ def get(backend: Backend, series_id: int, player_id: int):
 def _list(backend: Backend):
     """List all game results ins database."""
     results = backend.results.all()
-    df = to_pandas(results, TableResult, ["series_id", "player_id"])
+    df = to_pandas(results, Result, ["series_id", "player_id"])
     print_pandas_dataframe(df)

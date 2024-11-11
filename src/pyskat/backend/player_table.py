@@ -1,14 +1,11 @@
-from tinydb.queries import QueryLike
-
 from .backend import Backend
 from .data_model import Player
-from .helpers import update_if_not_none
+from sqlmodel import select
 
 
 class PlayersTable:
     def __init__(self, backend: Backend):
         self._backend = backend
-        self._table = self._backend.db.table("players")
 
     def add(
         self,
@@ -18,13 +15,15 @@ class PlayersTable:
     ) -> Player:
         """Add a new player to the database."""
         player = Player(
-            id=0,
             name=name,
             active=active,
             remarks=remarks or "",
         )
-        player.id = self._table.insert(player.model_dump(mode="json", exclude={"id"}))
-        return player
+        with self._backend.get_session() as session:
+            session.add(player)
+            session.commit()
+            session.refresh(player)
+            return player
 
     def update(
         self,
@@ -34,49 +33,41 @@ class PlayersTable:
         remarks: str | None = None,
     ) -> Player:
         """Update an existing player in the database."""
-        original = self._table.get(doc_id=id)
+        with self._backend.get_session() as session:
+            player = session.get(Player, id) or raise_player_not_found(id)
 
-        if not original:
-            raise_player_not_found(id)
+            if name is not None:
+                player.name = name
 
-        updated = update_if_not_none(
-            original,
-            name=name,
-            active=active,
-            remarks=remarks,
-        )
-        player = Player(id=id, **updated)
+            if active is not None:
+                player.active = active
 
-        self._table.update(player.model_dump(mode="json", exclude={"id"}), doc_ids=[id])
-        return player
+            if remarks is not None:
+                player.remarks = remarks
+
+            session.add(player)
+            session.commit()
+            session.refresh(player)
+            return player
 
     def remove(self, id: int) -> None:
         """Remove a player from the database."""
-        result = self._table.remove(doc_ids=[id])
-        if not result:
-            raise_player_not_found(id)
+        with self._backend.get_session() as session:
+            player = session.get(Player, id) or raise_player_not_found(id)
+            session.delete(player)
+            session.commit()
 
     def get(self, id: int) -> Player:
         """Get a player from the database."""
-        result = self._table.get(doc_id=id)
-
-        if not result:
-            raise_player_not_found(id)
-
-        player = Player(id=id, **result)
-        return player
+        with self._backend.get_session() as session:
+            player = session.get(Player, id)
+            return player or raise_player_not_found(id)
 
     def all(self) -> list[Player]:
         """Get a list of all players in the database."""
-        result = self._table.all()
-        players = [Player(id=p.doc_id, **p) for p in result]
-        return players
-
-    def query(self, query: QueryLike) -> list[Player]:
-        """Get the results of a TinyDB query."""
-        result = self._table.search(query)
-        players = [Player(id=p.doc_id, **p) for p in result]
-        return players
+        with self._backend.get_session() as session:
+            players = session.exec(select(Player)).all()
+            return list(players)
 
 
 def raise_player_not_found(id: int):
