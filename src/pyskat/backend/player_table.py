@@ -1,11 +1,10 @@
-from .backend import Backend
 from .data_model import Player
-from sqlmodel import select
+from sqlmodel import select, Session
 
 
 class PlayersTable:
-    def __init__(self, backend: Backend):
-        self._backend = backend
+    def __init__(self, session: Session):
+        self._session = session
 
     def add(
         self,
@@ -19,11 +18,10 @@ class PlayersTable:
             active=active,
             remarks=remarks or "",
         )
-        with self._backend.get_session() as session:
-            session.add(player)
-            session.commit()
-            session.refresh(player)
-            return player
+        self._session.add(player)
+        self._session.commit()
+        self._session.refresh(player)
+        return player
 
     def update(
         self,
@@ -33,41 +31,37 @@ class PlayersTable:
         remarks: str | None = None,
     ) -> Player:
         """Update an existing player in the database."""
-        with self._backend.get_session() as session:
-            player = session.get(Player, id) or raise_player_not_found(id)
+        player = self._session.get(Player, id) or raise_player_not_found(id)
 
-            if name is not None:
-                player.name = name
+        if name is not None:
+            player.name = name
 
-            if active is not None:
-                player.active = active
+        if active is not None:
+            player.active = active
 
-            if remarks is not None:
-                player.remarks = remarks
+        if remarks is not None:
+            player.remarks = remarks
 
-            session.add(player)
-            session.commit()
-            session.refresh(player)
-            return player
+        self._session.add(player)
+        self._session.commit()
+        self._session.refresh(player)
+        return player
 
     def remove(self, id: int) -> None:
         """Remove a player from the database."""
-        with self._backend.get_session() as session:
-            player = session.get(Player, id) or raise_player_not_found(id)
-            session.delete(player)
-            session.commit()
+        player = self._session.get(Player, id) or raise_player_not_found(id)
+        self._session.delete(player)
+        self._session.commit()
 
     def get(self, id: int) -> Player:
         """Get a player from the database."""
-        with self._backend.get_session() as session:
-            player = session.get(Player, id)
-            return player or raise_player_not_found(id)
+        player = self._session.get(Player, id)
+        return player or raise_player_not_found(id)
 
     def all(self) -> list[Player]:
         """Get a list of all players in the database."""
-        with self._backend.get_session() as session:
-            players = session.exec(select(Player)).all()
-            return list(players)
+        players = self._session.exec(select(Player)).all()
+        return list(players)
 
 
 def raise_player_not_found(id: int):

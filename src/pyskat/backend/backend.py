@@ -1,6 +1,10 @@
 from sqlmodel import Session, SQLModel, create_engine
 
 from .data_model import Player, Result, Series
+from .player_table import PlayersTable
+from .results_table import ResultsTable
+from .series_table import SeriesTable
+from .tables_table import TablesTable
 
 
 class Backend:
@@ -8,22 +12,23 @@ class Backend:
         self.engine = create_engine(connection_string)
         SQLModel.metadata.create_all(self.engine)
 
-        from .player_table import PlayersTable
-        from .results_table import ResultsTable
-        from .series_table import SeriesTable
-        from .tables_table import TablesTable
-
-        self.players = PlayersTable(self)
+    @staticmethod
+    def players(session: Session) -> PlayersTable:
         """Table of players."""
+        return PlayersTable(session)
 
-        self.results = ResultsTable(self)
+    def results(self, session: Session) -> ResultsTable:
         """Table of game results."""
+        return ResultsTable(self, session)
 
-        self.series = SeriesTable(self)
+    @staticmethod
+    def series(session: Session) -> SeriesTable:
         """Table of game series."""
+        return SeriesTable(session)
 
-        self.tables = TablesTable(self)
+    def tables(self, session: Session) -> TablesTable:
         """Table of series-player-table mappings."""
+        return TablesTable(self, session)
 
     def get_session(self) -> Session:
         return Session(self.engine)
@@ -46,7 +51,7 @@ class Backend:
                 series = Series(name=faker.city(), date=faker.date_time_this_year())
                 session.add(series)
                 session.commit()
-                self.shuffle_players_for_series(series.id)
+                self.tables(session).shuffle_players_for_series(series.id)
 
                 results = [
                     Result(

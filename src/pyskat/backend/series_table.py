@@ -1,13 +1,12 @@
 from datetime import datetime
 
-from .backend import Backend
 from .data_model import Series
-from sqlmodel import select
+from sqlmodel import select, Session
 
 
 class SeriesTable:
-    def __init__(self, backend: Backend):
-        self._backend = backend
+    def __init__(self, session: Session):
+        self._session = session
 
     def add(
         self,
@@ -21,11 +20,10 @@ class SeriesTable:
             date=date,
             remarks=remarks or "",
         )
-        with self._backend.get_session() as session:
-            session.add(series)
-            session.commit()
-            session.refresh(series)
-            return series
+        self._session.add(series)
+        self._session.commit()
+        self._session.refresh(series)
+        return series
 
     def update(
         self,
@@ -35,41 +33,37 @@ class SeriesTable:
         remarks: str | None = None,
     ) -> Series:
         """Update an existing series in the database."""
-        with self._backend.get_session() as session:
-            series = session.get(Series, id) or raise_series_not_found(id)
+        series = self._session.get(Series, id) or raise_series_not_found(id)
 
-            if name is not None:
-                series.name = name
+        if name is not None:
+            series.name = name
 
-            if date is not None:
-                series.date = date
+        if date is not None:
+            series.date = date
 
-            if remarks is not None:
-                series.remarks = remarks
+        if remarks is not None:
+            series.remarks = remarks
 
-            session.add(series)
-            session.commit()
-            session.refresh(series)
-            return series
+        self._session.add(series)
+        self._session.commit()
+        self._session.refresh(series)
+        return series
 
     def remove(self, id: int) -> None:
         """Remove a series from the database."""
-        with self._backend.get_session() as session:
-            series = session.get(Series, id) or raise_series_not_found(id)
-            session.delete(series)
-            session.commit()
+        series = self._session.get(Series, id) or raise_series_not_found(id)
+        self._session.delete(series)
+        self._session.commit()
 
     def get(self, id: int) -> Series:
         """Get a series from the database."""
-        with self._backend.get_session() as session:
-            series = session.get(Series, id)
-            return series or raise_series_not_found(id)
+        series = self._session.get(Series, id)
+        return series or raise_series_not_found(id)
 
     def all(self) -> list[Series]:
         """Get a list of all series in the database."""
-        with self._backend.get_session() as session:
-            series = session.exec(select(Series)).all()
-            return list(series)
+        series = self._session.exec(select(Series)).all()
+        return list(series)
 
 
 def raise_series_not_found(id: int):

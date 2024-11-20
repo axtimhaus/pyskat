@@ -17,9 +17,7 @@ class Player(SQLModel, table=True):
     remarks: str = ""
 
     results: list["Result"] = Relationship(back_populates="player")
-    tables: list["Table"] = Relationship(
-        link_model=TablePlayerLink, back_populates="players"
-    )
+    tables: list["Table"] = Relationship(link_model=TablePlayerLink, back_populates="players")
 
     @property
     def series(self) -> list["Series"]:
@@ -31,9 +29,7 @@ class Table(SQLModel, table=True):
     series_id: int = Field(gt=0, foreign_key="series.id")
     remarks: str = Field(default="")
 
-    players: list[Player] = Relationship(
-        link_model=TablePlayerLink, back_populates="tables"
-    )
+    players: list[Player] = Relationship(link_model=TablePlayerLink, back_populates="tables")
     series: "Series" = Relationship(back_populates="tables")
 
     @property
@@ -84,9 +80,7 @@ def to_pandas(
             index = (
                 pd.Index([], name=index_cols)
                 if isinstance(index_cols, str)
-                else pd.MultiIndex.from_arrays(
-                    [[] for c in index_cols], names=index_cols
-                )
+                else pd.MultiIndex.from_arrays([[] for c in index_cols], names=index_cols)
             )
             df = pd.DataFrame(pd.DataFrame(columns=cols, index=index))
         else:

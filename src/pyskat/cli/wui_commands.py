@@ -13,7 +13,7 @@ instance_path_option = click.option(
     "--instance-path",
     default=APP_DIR,
     type=click.Path(exists=True, file_okay=False, writable=True, path_type=Path),
-    help="The instance path to read config from an store state information to.",
+    help="The instance path to read config from and store state information to.",
 )
 
 

@@ -8,7 +8,7 @@ bp = Blueprint("players", __name__, url_prefix="/players")
 
 @bp.get("/")
 def index():
-    players_list = g.backend.players.all()
+    players_list = g.backend.players(g.session).all()
 
     return render_template(
         "players.html",
@@ -26,7 +26,7 @@ def add():
         abort(400, description="Invalid form data submitted.")
 
     try:
-        g.backend.players.add(
+        g.backend.players(g.session).add(
             name=name,
             active=active,
             remarks=remarks,
@@ -47,7 +47,7 @@ def update(id: int):
         abort(400, description="Invalid form data submitted.")
 
     try:
-        g.backend.players.update(
+        g.backend.players(g.session).update(
             id=id,
             name=name,
             active=active,
@@ -64,7 +64,7 @@ def update(id: int):
 @bp.post("/remove/<int:id>")
 def remove(id: int):
     try:
-        g.backend.players.remove(id)
+        g.backend.players(g.session).remove(id)
     except KeyError:
         flash_player_not_found(id)
     return redirect_to_index()

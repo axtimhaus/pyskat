@@ -1,10 +1,14 @@
-from .backend import Backend
 from .data_model import Result, Series
-from sqlmodel import select
+from sqlmodel import select, Session
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .backend import Backend
 
 
 class ResultsTable:
-    def __init__(self, backend: Backend):
+    def __init__(self, backend: "Backend", session: Session):
+        self._session = session
         self._backend = backend
 
     def add(
@@ -25,11 +29,10 @@ class ResultsTable:
             lost=lost,
             remarks=remarks or "",
         )
-        with self._backend.get_session() as session:
-            session.add(result)
-            session.commit()
-            session.refresh(result)
-            return result
+        self._session.add(result)
+        self._session.commit()
+        self._session.refresh(result)
+        return result
 
     def update(
         self,
@@ -41,27 +44,24 @@ class ResultsTable:
         remarks: str | None = None,
     ) -> Result:
         """Update an existing result in the database."""
-        with self._backend.get_session() as session:
-            result = session.get(
-                Result, (series_id, player_id)
-            ) or raise_result_not_found(series_id, player_id)
+        result = self._session.get(Result, (series_id, player_id)) or raise_result_not_found(series_id, player_id)
 
-            if points is not None:
-                result.points = points
+        if points is not None:
+            result.points = points
 
-            if won is not None:
-                result.won = won
+        if won is not None:
+            result.won = won
 
-            if lost is not None:
-                result.lost = lost
+        if lost is not None:
+            result.lost = lost
 
-            if remarks is not None:
-                result.remarks = remarks
+        if remarks is not None:
+            result.remarks = remarks
 
-            session.add(result)
-            session.commit()
-            session.refresh(result)
-            return result
+        self._session.add(result)
+        self._session.commit()
+        self._session.refresh(result)
+        return result
 
     def remove(
         self,
@@ -69,12 +69,9 @@ class ResultsTable:
         player_id: int,
     ) -> None:
         """Remove a result from the database."""
-        with self._backend.get_session() as session:
-            result = session.get(
-                Result, (series_id, player_id)
-            ) or raise_result_not_found(series_id, player_id)
-            session.delete(result)
-            session.commit()
+        result = self._session.get(Result, (series_id, player_id)) or raise_result_not_found(series_id, player_id)
+        self._session.delete(result)
+        self._session.commit()
 
     def get(
         self,
@@ -82,33 +79,27 @@ class ResultsTable:
         player_id: int,
     ) -> Result:
         """Get a result from the database."""
-        with self._backend.get_session() as session:
-            return session.get(
-                Result, (series_id, player_id)
-            ) or raise_result_not_found(series_id, player_id)
+        return self._session.get(Result, (series_id, player_id)) or raise_result_not_found(series_id, player_id)
 
     def all(self) -> list[Result]:
         """Get a list of all results in the database."""
-        with self._backend.get_session() as session:
-            results = session.exec(select(Result)).all()
-            return list(results)
+        results = self._session.exec(select(Result)).all()
+        return list(results)
 
     def all_for_series(self, series_id: int) -> list[Result]:
         """Get all the results for a defined series in the database."""
-        with self._backend.get_session() as session:
-            results = session.exec(select(Result).where(Series.id == series_id)).all()
-            return list(results)
+        results = self._session.exec(select(Result).where(Series.id == series_id)).all()
+        return list(results)
 
     def clear_for_series(self, series_id: int) -> None:
         """Remove all the results for a defined series in the database."""
-        with self._backend.get_session() as session:
-            results = session.exec(select(Result).where(Series.id == series_id))
-            for r in results:
-                session.delete(r)
-            session.commit()
+        results = self._session.exec(select(Result).where(Series.id == series_id))
+        for r in results:
+            self._session.delete(r)
+        self._session.commit()
 
     def get_opponents_lost(self, series_id: int, player_id: int) -> int:
-        table = self._backend.tables.get_table_with_player(series_id, player_id)
+        table = self._backend.tables(self._session).get_table_with_player(series_id, player_id)
         other_players = table.player_ids
         other_players.remove(player_id)
         others_lost = [self.get(series_id, p).lost for p in other_players]

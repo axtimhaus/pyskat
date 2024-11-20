@@ -3,10 +3,11 @@ from .manager import plugin_manager, hookimpl
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
+from sqlmodel import Session
 
 
-def create_result_plots(backend: Backend, results: pd.DataFrame) -> list[go.Figure]:
-    plots = plugin_manager.hook.plot_results(backend=backend, results=results)
+def create_result_plots(backend: Backend, session: Session, results: pd.DataFrame) -> list[go.Figure]:
+    plots = plugin_manager.hook.plot_results(backend=backend,session=session, results=results)
     return plots
 
 
