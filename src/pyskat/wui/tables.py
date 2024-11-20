@@ -28,7 +28,7 @@ def index(series_id):
         series=series,
         tables=tables_list,
         players={p.id: p for p in players},
-        results={r.player_id : r for r in results}
+        results={r.player_id: r for r in results},
     )
 
 
@@ -147,7 +147,10 @@ def flash_player_multiply_present_in_table(table_id: int, player_id: int):
 
 def flash_player_multiply_present_in_series(table_id: int, player_id: int):
     player = g.backend.players(g.session).get(player_id)
-    flash(f"Player {player.name} ({player.id}) is defined multiple times in series (duplicate at table {table_id}).", "warning")
+    flash(
+        f"Player {player.name} ({player.id}) is defined multiple times in series (duplicate at table {table_id}).",
+        "warning",
+    )
 
 
 @bp.post("/shuffle", defaults=dict(series_id=None))

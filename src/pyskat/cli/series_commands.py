@@ -32,9 +32,7 @@ def complete_series_id(ctx: click.Context, param, incomplete):
         return c
 
 
-series_id_argument = click.argument(
-    "series_id", type=click.INT, shell_complete=complete_series_id, required=False
-)
+series_id_argument = click.argument("series_id", type=click.INT, shell_complete=complete_series_id, required=False)
 
 
 class CurrentSeries:
@@ -156,9 +154,7 @@ def update(
             if date is None:
                 date = click.prompt("Date", default=series.get(series_id).date)
             if remarks is None:
-                remarks = click.prompt(
-                    "Remarks", default=series.get(series_id).remarks
-                )
+                remarks = click.prompt("Remarks", default=series.get(series_id).remarks)
 
             series.update(series_id, name, date, remarks)
         except KeyError:

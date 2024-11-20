@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class TablesTable:
-    def __init__(self, backend: 'Backend', session: Session):
+    def __init__(self, backend: "Backend", session: Session):
         self._backend = backend
         self._session = session
 

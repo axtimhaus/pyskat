@@ -30,6 +30,7 @@ def create_app(
 
     def close_session(error):
         from flask import g
+
         g.session.close()
 
     app.before_request(provide_backend_and_session)
@@ -37,9 +38,7 @@ def create_app(
 
     @app.route("/")
     def index():
-        return render_template(
-            "index.html"
-        )
+        return render_template("index.html")
 
     from . import players
 

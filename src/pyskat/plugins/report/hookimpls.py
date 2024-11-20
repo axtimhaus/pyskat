@@ -37,7 +37,7 @@ def result_table(backend: Backend, results: pd.DataFrame) -> str:
 @hookimpl(specname="report_results_display")
 def plots(backend: Backend, results: pd.DataFrame) -> str:
     with backend.get_session() as session:
-        plots = create_result_plots(backend,session, results)
+        plots = create_result_plots(backend, session, results)
         template = ENV.get_template("plots.html")
         plot_titles = [p.layout.title.text for p in plots]
 

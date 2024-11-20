@@ -7,7 +7,7 @@ from sqlmodel import Session
 
 
 def create_result_plots(backend: Backend, session: Session, results: pd.DataFrame) -> list[go.Figure]:
-    plots = plugin_manager.hook.plot_results(backend=backend,session=session, results=results)
+    plots = plugin_manager.hook.plot_results(backend=backend, session=session, results=results)
     return plots
 
 

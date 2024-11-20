@@ -16,17 +16,11 @@ def complete_player_id(ctx: click.Context, param, incomplete):
     with backend.get_session() as session:
         players = backend.players(session).all()
 
-        c = [
-            CompletionItem(p.id, help=p.name)
-            for p in players
-            if str(p.id).startswith(str(incomplete))
-        ]
+        c = [CompletionItem(p.id, help=p.name) for p in players if str(p.id).startswith(str(incomplete))]
         return c
 
 
-player_id_argument = click.argument(
-    "player_id", type=click.INT, shell_complete=complete_player_id
-)
+player_id_argument = click.argument("player_id", type=click.INT, shell_complete=complete_player_id)
 
 
 @click.group()
@@ -86,9 +80,7 @@ def update(backend: Backend, player_id: int, name: str | None, remarks: str | No
             if name is None:
                 name = click.prompt("Name", default=players.get(player_id).name)
             if remarks is None:
-                remarks = click.prompt(
-                    "Remarks", default=players.get(player_id).remarks
-                )
+                remarks = click.prompt("Remarks", default=players.get(player_id).remarks)
 
             players.update(player_id, name, remarks)
         except KeyError:

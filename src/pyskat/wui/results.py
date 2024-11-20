@@ -19,7 +19,7 @@ def index(series_id):
         tables_list = []
         results = []
 
-    players=g.backend.players(g.session).all()
+    players = g.backend.players(g.session).all()
     series = g.backend.series(g.session).get(series_id)
 
     return render_template(
@@ -27,7 +27,7 @@ def index(series_id):
         series=series,
         tables=tables_list,
         players={p.id: p for p in players},
-        results={r.player_id : r for r in results}
+        results={r.player_id: r for r in results},
     )
 
 
@@ -102,6 +102,3 @@ def redirect_to_index(series_id):
     if series_id == session.get("current_series"):
         series_id = None
     return redirect(url_for("results.index", series_id=series_id))
-
-
-

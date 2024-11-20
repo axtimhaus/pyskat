@@ -13,9 +13,7 @@ def index():
     series_list = g.backend.series(g.session).all()
 
     return render_template(
-        "series.html",
-        series=series_list,
-        now=datetime.today().isoformat(sep=" ", timespec="minutes")
+        "series.html", series=series_list, now=datetime.today().isoformat(sep=" ", timespec="minutes")
     )
 
 

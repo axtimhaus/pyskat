@@ -117,21 +117,13 @@ def update(
 
         try:
             if points is None:
-                points = click.prompt(
-                    "Points", default=results.get(series_id, player_id).points
-                )
+                points = click.prompt("Points", default=results.get(series_id, player_id).points)
             if won is None:
-                won = click.prompt(
-                    "Won", default=results.get(series_id, player_id).won
-                )
+                won = click.prompt("Won", default=results.get(series_id, player_id).won)
             if lost is None:
-                remarks = click.prompt(
-                    "Lost", default=results.get(series_id, player_id).lost
-                )
+                remarks = click.prompt("Lost", default=results.get(series_id, player_id).lost)
             if remarks is None:
-                remarks = click.prompt(
-                    "Remarks", default=results.get(series_id, player_id).remarks
-                )
+                remarks = click.prompt("Remarks", default=results.get(series_id, player_id).remarks)
 
             results.update(series_id, player_id, points, won, lost, remarks)
         except KeyError:
