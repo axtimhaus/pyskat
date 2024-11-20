@@ -1,17 +1,10 @@
-from pathlib import Path
-from sqlmodel import create_engine, Session, SQLModel, select, col
-from .data_model import Player, Series, Result, to_pandas, Table
-import numpy as np
+from sqlmodel import Session, SQLModel, create_engine
+
+from .data_model import Player, Result, Series
 
 
 class Backend:
-    def __init__(
-        self,
-        database_file: Path,
-        result_id_module=1000,
-    ):
-        connection_string = f"sqlite:///{database_file.resolve()}"
-        print(connection_string)
+    def __init__(self, connection_string: str):
         self.engine = create_engine(connection_string)
         SQLModel.metadata.create_all(self.engine)
 
