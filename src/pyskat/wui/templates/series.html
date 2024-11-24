@@ -34,44 +34,44 @@
             </tr>
             </thead>
             <tbody>
-            {% for p in series %}
+            {% for s in series %}
                 <tr>
-                    <td>{{ p.id }}</td>
-                    <td>{{ p.name }}</td>
-                    <td>{{ p.date.isoformat(sep=" ", timespec="minutes") }}</td>
-                    <td>{{ p.remarks }}</td>
+                    <td>{{ s.id }}</td>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.date.isoformat(sep=" ", timespec="minutes") }}</td>
+                    <td>{{ s.remarks }}</td>
                     <td>
                         <div class="btn-group">
-                            {% if session.current_series == p.id %}
+                            {% if session.current_series == s.id %}
                                 <button class="btn btn-success" disabled>Current</button>
                             {% else %}
-                                <input type="submit" form="form-set-series-{{- p.id -}}" class="btn btn-primary"
+                                <input type="submit" form="form-set-series-{{- s.id -}}" class="btn btn-primary"
                                        value="Set Current"/>
                             {% endif %}
-                            <a class="btn btn-primary" href="{{ url_for("tables.index", series_id=p.id) }}">View Tables</a>
-                            {{ modal_editor_open("edit-series-{}".format(p.id), "Edit", "warning") }}
-                            {{ modal_editor_open("remove-series-{}".format(p.id), "Remove", "danger") }}
+                            <a class="btn btn-primary" href="{{ url_for("tables.index", series_id=s.id) }}">View Tables</a>
+                            {{ modal_editor_open("edit-series-{}".format(s.id), "Edit", "warning") }}
+                            {{ modal_editor_open("remove-series-{}".format(s.id), "Remove", "danger") }}
                         </div>
-                        {% call modal_editor("edit-series-{}".format(p.id), url_for("series.update", id=p.id), "Edit Series", "Edit", "warning") %}
+                        {% call modal_editor("edit-series-{}".format(s.id), url_for("series.update", id=s.id), "Edit Series", "Edit", "warning") %}
                             <div>
                                 <label for="name" class="form-label">Name</label>
-                                <input id="name" name="name" type="text" value="{{- p.name -}}"
+                                <input id="name" name="name" type="text" value="{{- s.name -}}"
                                        class="form-control"/>
                             </div>
                             <div class="mt-3">
                                 <label for="date" class="form-label">Date</label>
-                                <input id="date" name="date" type="text" value="{{- p.date -}}"
+                                <input id="date" name="date" type="text" value="{{- s.date -}}"
                                        class="form-control"/>
                             </div>
                             <div class="mt-3">
                                 <label for="remarks" class="form-label">Remarks</label>
-                                <input id="remarks" name="remarks" type="text" value="{{- p.remarks -}}"
+                                <input id="remarks" name="remarks" type="text" value="{{- s.remarks -}}"
                                        class="form-control"/>
                             </div>
                         {% endcall %}
-                        {% call modal_editor("remove-series-{}".format(p.id), url_for("series.remove", id=p.id), "Remove Series", "Remove", "danger") %}
-                            Really remove the series <strong class="text-danger">{{- p.name -}}</strong> with the ID
-                            <strong class="text-danger">{{- p.id -}}</strong>?
+                        {% call modal_editor("remove-series-{}".format(s.id), url_for("series.remove", id=s.id), "Remove Series", "Remove", "danger") %}
+                            Really remove the series <strong class="text-danger">{{- s.name -}}</strong> with the ID
+                            <strong class="text-danger">{{- s.id -}}</strong>?
                         {% endcall %}
                     </td>
                 </tr>
@@ -79,4 +79,8 @@
             </tbody>
         </table>
     </div>
+
+    {% for s in series %}
+        <form id="form-set-series-{{- s.id -}}" method="post" action="{{ url_for("series.set_current", id=s.id) }}"></form>
+    {% endfor %}
 {% endblock %}
