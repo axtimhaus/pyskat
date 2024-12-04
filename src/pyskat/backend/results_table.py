@@ -88,12 +88,12 @@ class ResultsTable:
 
     def all_for_series(self, series_id: int) -> list[Result]:
         """Get all the results for a defined series in the database."""
-        results = self._session.exec(select(Result).where(Series.id == series_id)).all()
+        results = self._session.exec(select(Result).where(Result.series_id == series_id)).all()
         return list(results)
 
     def clear_for_series(self, series_id: int) -> None:
         """Remove all the results for a defined series in the database."""
-        results = self._session.exec(select(Result).where(Series.id == series_id))
+        results = self._session.exec(select(Result).where(Result.series_id == series_id))
         for r in results:
             self._session.delete(r)
         self._session.commit()

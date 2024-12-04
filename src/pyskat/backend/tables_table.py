@@ -183,7 +183,7 @@ class TablesTable:
 
     def get_table_with_player(self, series_id: int, player_id: int) -> Table:
         table, _ = self._session.exec(
-            select(Table, TablePlayerLink).where(Table.series_id == series_id, TablePlayerLink.player_id == player_id)
+            select(Table, TablePlayerLink).where(Table.series_id == series_id, Table.id == TablePlayerLink.table_id, TablePlayerLink.player_id == player_id)
         ).one()
         return table
 

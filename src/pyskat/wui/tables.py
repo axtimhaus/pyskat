@@ -52,7 +52,7 @@ def add(series_id):
             player1_id=player1_id,
             player2_id=player2_id,
             player3_id=player3_id,
-            player4_id=player4_id,
+            player4_id=(player4_id != "" and player4_id != "0") or None,
             remarks=remarks,
         )
     except ValidationError as e:
@@ -77,11 +77,11 @@ def update(series_id: int, table_id: int):
     try:
         g.backend.tables(g.session).update(
             series_id=series_id,
-            table_id=table_id,
+            id=table_id,
             player1_id=player1_id,
             player2_id=player2_id,
             player3_id=player3_id,
-            player4_id=player4_id,
+            player4_id=(player4_id != "" and player4_id != "0") or None,
             remarks=remarks,
         )
     except KeyError:
@@ -115,7 +115,7 @@ def redirect_to_index(series_id):
 @bp.get("/check/<int:series_id>")
 def check(series_id):
     series_id = series_id or session.get("current_series", None)
-    tables = g.backend.tables(g.session).all(series_id)
+    tables = g.backend.tables(g.session).all_for_series(series_id)
 
     is_valid = True
     series_players = []

@@ -99,12 +99,12 @@
                 {% set player_count = t.player_ids|length %}
                 <tr>
                     <td rowspan="{{ player_count }}">{{ t.table_id }}</td>
-                    {{ player_display(t.player1_id) }}
+                    {{ player_display(t.player_ids[0]) }}
                 </tr>
-                <tr>{{ player_display(t.player2_id) }}</tr>
-                <tr>{{ player_display(t.player3_id) }}</tr>
-                {% if t.player4_id %}
-                    <tr>{{ player_display(t.player4_id) }}</tr>
+                <tr>{{ player_display(t.player_ids[1]) }}</tr>
+                <tr>{{ player_display(t.player_ids[2]) }}</tr>
+                {% if t.size == 4 %}
+                    <tr>{{ player_display(t.player_ids[3]) }}</tr>
                 {% endif %}
             {% endfor %}
             </tbody>

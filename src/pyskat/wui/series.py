@@ -29,7 +29,7 @@ def add():
     try:
         g.backend.series(g.session).add(
             name=name,
-            date=date,
+            date=datetime.fromisoformat(date),
             remarks=remarks,
         )
     except ValidationError as e:
@@ -51,7 +51,7 @@ def update(id: int):
         g.backend.series(g.session).update(
             id=id,
             name=name,
-            date=date,
+            date=datetime.fromisoformat(date),
             remarks=remarks,
         )
     except KeyError:

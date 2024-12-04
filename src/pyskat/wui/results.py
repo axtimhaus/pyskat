@@ -12,7 +12,7 @@ def index(series_id):
     series_id = series_id or session.get("current_series", None)
 
     if series_id:
-        tables_list = g.backend.tables(g.session).all(series_id)
+        tables_list = g.backend.tables(g.session).all_for_series(series_id)
         results = g.backend.results(g.session).all_for_series(series_id)
     else:
         flash("Please select a series on the series page to use this page.", "warning")
