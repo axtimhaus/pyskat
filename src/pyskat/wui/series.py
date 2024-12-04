@@ -10,12 +10,10 @@ bp = Blueprint("series", __name__, url_prefix="/series")
 
 @bp.get("/")
 def index():
-    series_list = g.backend.series.all()
+    series_list = g.backend.series(g.session).all()
 
     return render_template(
-        "series.html",
-        series=series_list,
-        now=datetime.today().isoformat(sep=" ", timespec="minutes")
+        "series.html", series=series_list, now=datetime.today().isoformat(sep=" ", timespec="minutes")
     )
 
 
@@ -29,9 +27,9 @@ def add():
         abort(400, description="Invalid form data submitted.")
 
     try:
-        g.backend.series.add(
+        g.backend.series(g.session).add(
             name=name,
-            date=date,
+            date=datetime.fromisoformat(date),
             remarks=remarks,
         )
     except ValidationError as e:
@@ -50,10 +48,10 @@ def update(id: int):
         abort(400, description="Invalid form data submitted.")
 
     try:
-        g.backend.series.update(
+        g.backend.series(g.session).update(
             id=id,
             name=name,
-            date=date,
+            date=datetime.fromisoformat(date),
             remarks=remarks,
         )
     except KeyError:
@@ -67,7 +65,7 @@ def update(id: int):
 @bp.post("/remove/<int:id>")
 def remove(id: int):
     try:
-        g.backend.series.remove(id)
+        g.backend.series(g.session).remove(id)
     except KeyError:
         flash_series_not_found(id)
     return redirect_to_index()

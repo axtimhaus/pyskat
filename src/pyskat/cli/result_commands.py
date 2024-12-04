@@ -1,7 +1,7 @@
 import click
 
 from ..backend import Backend
-from ..backend.data_model import to_pandas, TableResult
+from ..backend.data_model import to_pandas, Result
 from ..rich import console, print_pandas_dataframe
 from .main import pass_backend
 from .player_commands import player_id_argument
@@ -63,10 +63,11 @@ def add(
     remarks: str,
 ):
     """Add a new game result to database."""
-    try:
-        backend.results.add(series_id, player_id, points, won, lost, remarks)
-    except KeyError:
-        console.print_exception()
+    with backend.get_session() as session:
+        try:
+            backend.results(session).add(series_id, player_id, points, won, lost, remarks)
+        except KeyError:
+            console.print_exception()
 
 
 @result.command()
@@ -111,19 +112,22 @@ def update(
     remarks: str | None,
 ):
     """Update an existing game result in database."""
-    try:
-        if points is None:
-            points = click.prompt("Points", default=backend.results.get(series_id, player_id).points)
-        if won is None:
-            won = click.prompt("Won", default=backend.results.get(series_id, player_id).won)
-        if lost is None:
-            remarks = click.prompt("Lost", default=backend.results.get(series_id, player_id).lost)
-        if remarks is None:
-            remarks = click.prompt("Remarks", default=backend.results.get(series_id, player_id).remarks)
+    with backend.get_session() as session:
+        results = backend.results(session)
 
-        backend.results.update(series_id, player_id, points, won, lost, remarks)
-    except KeyError:
-        console.print_exception()
+        try:
+            if points is None:
+                points = click.prompt("Points", default=results.get(series_id, player_id).points)
+            if won is None:
+                won = click.prompt("Won", default=results.get(series_id, player_id).won)
+            if lost is None:
+                remarks = click.prompt("Lost", default=results.get(series_id, player_id).lost)
+            if remarks is None:
+                remarks = click.prompt("Remarks", default=results.get(series_id, player_id).remarks)
+
+            results.update(series_id, player_id, points, won, lost, remarks)
+        except KeyError:
+            console.print_exception()
 
 
 @result.command()
@@ -132,17 +136,15 @@ def update(
 @pass_backend
 def remove(backend: Backend, series_id: int, player_id: int):
     """Remove a game result from database."""
-    try:
-        target = backend.results.get(series_id, player_id)
-    except KeyError:
-        console.print_exception()
-        return
+    with backend.get_session() as session:
+        if not click.confirm(f"Remove result {series_id}/{player_id}?", default=False):
+            console.print("Aborted.")
+            return
 
-    if not click.confirm(f"Remove result {series_id}/{player_id}?", default=False):
-        console.print("Aborted.")
-        return
-
-    backend.results.remove(series_id, player_id)
+        try:
+            backend.results(session).remove(series_id, player_id)
+        except KeyError:
+            console.print_exception()
 
 
 @result.command()
@@ -151,18 +153,20 @@ def remove(backend: Backend, series_id: int, player_id: int):
 @pass_backend
 def get(backend: Backend, series_id: int, player_id: int):
     """Get a game result from database."""
-    try:
-        p = backend.results.get(series_id, player_id)
+    with backend.get_session() as session:
+        try:
+            p = backend.results(session).get(series_id, player_id)
 
-        console.print(p)
-    except KeyError:
-        console.print_exception()
+            console.print(p)
+        except KeyError:
+            console.print_exception()
 
 
 @result.command(name="list")
 @pass_backend
 def _list(backend: Backend):
     """List all game results ins database."""
-    results = backend.results.all()
-    df = to_pandas(results, TableResult, ["series_id", "player_id"])
-    print_pandas_dataframe(df)
+    with backend.get_session() as session:
+        results = backend.results(session).all()
+        df = to_pandas(results, Result, ["series_id", "player_id"])
+        print_pandas_dataframe(df)

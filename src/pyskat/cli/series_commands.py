@@ -12,6 +12,7 @@ from ..backend.data_model import to_pandas, Series, Table, Player
 from ..rich import console, print_pandas_dataframe
 from .config import APP_DIR
 from .main import pass_backend
+from sqlmodel import Session
 
 SERIES_NAME_HELP = "A name for the series."
 SERIES_DATE_HELP = "The date or time stamp the series was played on."
@@ -20,12 +21,15 @@ SERIES_REMARKS_HELP = "Additional remarks."
 
 def complete_series_id(ctx: click.Context, param, incomplete):
     backend: Backend = ctx.find_object(Backend)
-    all_series = backend.series.all()
+    with backend.get_session() as session:
+        all_series = backend.series(session).all()
 
-    c = [
-        CompletionItem(s.id, help=f"{s.name} on {s.date}") for s in all_series if str(s.id).startswith(str(incomplete))
-    ]
-    return c
+        c = [
+            CompletionItem(s.id, help=f"{s.name} on {s.date}")
+            for s in all_series
+            if str(s.id).startswith(str(incomplete))
+        ]
+        return c
 
 
 series_id_argument = click.argument("series_id", type=click.INT, shell_complete=complete_series_id, required=False)
@@ -36,16 +40,16 @@ class CurrentSeries:
         self._file = file
         file.parent.mkdir(exist_ok=True)
         try:
-            self._value = int(file.read_text())
+            self._value = int(file.read_text()) or None
         except:
             self._value = None
 
-    def get(self) -> int:
+    def get(self) -> int | None:
         return self._value
 
-    def set(self, id: int):
+    def set(self, id: int | None):
         self._value = id
-        self._file.write_text(str(id))
+        self._file.write_text(str(id or ""))
 
 
 pass_current_series = click.make_pass_decorator(CurrentSeries)
@@ -99,8 +103,9 @@ def add(
     remarks: str,
 ):
     """Create a new series and set it as current."""
-    id = backend.series.add(name, date, remarks)
-    current_series.set(id)
+    with backend.get_session() as session:
+        id = backend.series(session).add(name, date, remarks).id
+        current_series.set(id)
 
 
 @series.command()
@@ -140,17 +145,20 @@ def update(
     if not series_id:
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
 
-    try:
-        if name is None:
-            name = click.prompt("Name", default=backend.series.get(series_id).name)
-        if date is None:
-            date = click.prompt("Date", default=backend.series.get(series_id).date)
-        if remarks is None:
-            remarks = click.prompt("Remarks", default=backend.series.get(series_id).remarks)
+    with backend.get_session() as session:
+        series = backend.series(session)
 
-        backend.series.update(series_id, name, date, remarks)
-    except KeyError:
-        console.print_exception()
+        try:
+            if name is None:
+                name = click.prompt("Name", default=series.get(series_id).name)
+            if date is None:
+                date = click.prompt("Date", default=series.get(series_id).date)
+            if remarks is None:
+                remarks = click.prompt("Remarks", default=series.get(series_id).remarks)
+
+            series.update(series_id, name, date, remarks)
+        except KeyError:
+            console.print_exception()
 
 
 @series.command()
@@ -158,22 +166,23 @@ def update(
 @pass_backend
 def remove(backend: Backend, series_id: int):
     """Remove a series from database."""
-    try:
-        target = backend.series.get(series_id)
-    except KeyError:
-        console.print_exception()
-        return
+    with backend.get_session() as session:
+        try:
+            target = backend.series(session).get(series_id)
+        except KeyError:
+            console.print_exception()
+            return
 
-    if not click.confirm(
-        f"Remove series {series_id} ({target.name} on {target.date})? This can not be undone. Respective tables and results will also be removed.",
-        default=False,
-    ):
-        console.print("Aborted.")
-        return
+        if not click.confirm(
+            f"Remove series {series_id} ({target.name} on {target.date})? This can not be undone. Respective tables and results will also be removed.",
+            default=False,
+        ):
+            console.print("Aborted.")
+            return
 
-    backend.series.remove(series_id)
-    backend.tables.clear_for_series(series_id)
-    backend.results.clear_for_series(series_id)
+        backend.series(session).remove(series_id)
+        backend.tables(session).clear_for_series(series_id)
+        backend.results(session).clear_for_series(series_id)
 
 
 @series.command()
@@ -189,9 +198,10 @@ def set(backend: Backend, current_series: CurrentSeries, series_id: int):
 @pass_backend
 def _list(backend: Backend):
     """List all series in database."""
-    all_series = backend.series.all()
-    df = to_pandas(all_series, Series, "id")
-    print_pandas_dataframe(df)
+    with backend.get_session() as session:
+        all_series = backend.series(session).all()
+        df = to_pandas(all_series, Series, "id")
+        print_pandas_dataframe(df)
 
 
 @series.command()
@@ -240,24 +250,25 @@ def shuffle_tables(
     active_only: bool,
 ):
     """Generate a random player distribution of players to tables."""
-    if not series_id:
-        series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
+    with backend.get_session() as session:
+        if not series_id:
+            series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
 
-    old = backend.tables.all(series_id)
-    if old:
-        if not click.confirm(
-            "There is already a player-to-table distribution for this series. Proceeding will overwrite that."
-        ):
-            return
+        old = backend.tables(session).all_for_series(series_id)
+        if old:
+            if not click.confirm(
+                "There is already a player-to-table distribution for this series. Proceeding will overwrite that."
+            ):
+                return
 
-    backend.tables.shuffle_players_for_series(
-        series_id,
-        active_only=active_only,
-        include=include or None,
-        exclude=exclude or None,
-        include_only=include_only or None,
-    )
-    print_series_table(backend, series_id)
+        backend.tables(session).shuffle_players_for_series(
+            series_id,
+            active_only=active_only,
+            include=include or None,
+            exclude=exclude or None,
+            include_only=include_only or None,
+        )
+        print_series_table(backend, series_id)
 
 
 @series.command()
@@ -266,16 +277,17 @@ def shuffle_tables(
 @pass_backend
 def list_tables(backend: Backend, current_series: CurrentSeries, series_id: int | None):
     """Generate a random player distribution of players to tables."""
-    if not series_id:
-        series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
-    print_series_table(backend, series_id)
+    with backend.get_session() as session:
+        if not series_id:
+            series_id = click.prompt("Id", default=current_series.get(), type=click.INT)
+        print_series_table(backend, session, series_id)
 
 
-def print_series_table(backend: Backend, id: int):
-    df = to_pandas(backend.tables.all(id), Table, ["table_id"])
+def print_series_table(backend: Backend, session: Session, id: int):
+    df = to_pandas(backend.tables(session).all_for_series(id), Table, ["table_id"])
     df.drop("series_id", axis=1, inplace=True)
 
-    all_players = to_pandas(backend.players.all(), Player, "id")
+    all_players = to_pandas(backend.players(session).all(), Player, "id")
 
     def get_player_name(pid):
         if pid == 0:
@@ -312,7 +324,13 @@ def print_series_table(backend: Backend, id: int):
 )
 @pass_current_series
 @pass_backend
-def evaluate(backend: Backend, current_series: CurrentSeries, series_id: int, sort_by: str | None, reverse: bool):
+def evaluate(
+    backend: Backend,
+    current_series: CurrentSeries,
+    series_id: int,
+    sort_by: str | None,
+    reverse: bool,
+):
     """Evaluate and display all game results."""
     if not series_id:
         series_id = click.prompt("Id", default=current_series.get(), type=click.INT)

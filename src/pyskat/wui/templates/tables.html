@@ -83,42 +83,42 @@
             {% for t in tables %}
                 {% set player_count = t.player_ids|length %}
                 <tr>
-                    <td rowspan="{{ player_count }}">{{ t.table_id }}</td>
-                    {{ player_display(t.player1_id) }}
+                    <td rowspan="{{ player_count }}">{{ t.id }}</td>
+                    {{ player_display(t.player_ids[0]) }}
                     <td rowspan="{{ player_count }}">{{ t.remarks }}</td>
                     <td rowspan="{{ player_count }}">
                         <div class="btn-group">
                             <button type="button" class="btn btn-warning" data-bs-toggle="modal"
-                                    data-bs-target="#modal-update-table-{{- t.table_id -}}">Edit
+                                    data-bs-target="#modal-update-table-{{- t.id -}}">Edit
                             </button>
                             <button type="button" class="btn btn-danger"
                                     data-bs-toggle="modal"
-                                    data-bs-target="#modal-remove-table-{{- t.table_id -}}">Remove
+                                    data-bs-target="#modal-remove-table-{{- t.id -}}">Remove
                             </button>
                         </div>
                     </td>
                 </tr>
-                <tr>{{ player_display(t.player2_id) }}</tr>
-                <tr>{{ player_display(t.player3_id) }}</tr>
-                {% if t.player4_id %}
-                    <tr>{{ player_display(t.player4_id) }}</tr>
+                <tr>{{ player_display(t.player_ids[1]) }}</tr>
+                <tr>{{ player_display(t.player_ids[2]) }}</tr>
+                {% if t.size == 4 %}
+                    <tr>{{ player_display(t.player_ids[3]) }}</tr>
                 {% endif %}
             {% endfor %}
             </tbody>
         </table>
 
         {% for t in tables %}
-            <div class="modal fade" id="modal-update-table-{{- t.table_id -}}" tabindex="-1"
-                 aria-labelledby="modal-update-table-{{- t.table_id -}}-label" aria-hidden="true">
+            <div class="modal fade" id="modal-update-table-{{- t.id -}}" tabindex="-1"
+                 aria-labelledby="modal-update-table-{{- t.id -}}-label" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="modal-update-table-{{- t.table_id -}}">Edit Table</h1>
+                            <h1 class="modal-title fs-5" id="modal-update-table-{{- t.id -}}">Edit Table</h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form id="form-update-table-{{- t.table_id -}}" method="post"
-                                  action="{{ url_for("tables.update", series_id=series.id, table_id=t.table_id) }}">
+                            <form id="form-update-table-{{- t.id -}}" method="post"
+                                  action="{{ url_for("tables.update", series_id=series.id, table_id=t.id) }}">
                                 {% macro player_select(player_id) %}
                                     {% set input_id = "player{}_id".format(player_id) %}
                                     <div class="mb-3">
@@ -150,29 +150,29 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <input type="submit" form="form-update-table-{{- t.table_id -}}" class="btn btn-warning"
+                            <input type="submit" form="form-update-table-{{- t.id -}}" class="btn btn-warning"
                                    value="Edit"/>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="modal-remove-table-{{- t.table_id -}}" tabindex="-1"
-                 aria-labelledby="modal-remove-table-{{- t.table_id -}}-label" aria-hidden="true">
+            <div class="modal fade" id="modal-remove-table-{{- t.id -}}" tabindex="-1"
+                 aria-labelledby="modal-remove-table-{{- t.id -}}-label" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="modal-remove-table-{{- t.table_id -}}">Remove Table</h1>
+                            <h1 class="modal-title fs-5" id="modal-remove-table-{{- t.id -}}">Remove Table</h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             Really remove the table <strong>{{- t.name -}}</strong> with the ID
-                            <strong>{{- t.table_id -}}</strong>?
-                            <form id="form-remove-table-{{- t.table_id -}}" method="post"
-                                  action="{{ url_for("tables.remove", series_id=series.id, table_id=t.table_id) }}"></form>
+                            <strong>{{- t.id -}}</strong>?
+                            <form id="form-remove-table-{{- t.id -}}" method="post"
+                                  action="{{ url_for("tables.remove", series_id=series.id, table_id=t.id) }}"></form>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <input type="submit" form="form-remove-table-{{- t.table_id -}}" class="btn btn-danger"
+                            <input type="submit" form="form-remove-table-{{- t.id -}}" class="btn btn-danger"
                                    value="Remove"/>
                         </div>
                     </div>

@@ -35,20 +35,21 @@ def evaluate():
 def show(backend: Backend, sort_by: str | None, reverse: bool):
     """Evaluate and display game results per series and in total."""
     try:
-        evaluation = plugins.evaluate_results(backend, None)
-        evaluation_total = plugins.evaluate_results_total(backend, evaluation)
+        with backend.get_session() as session:
+            evaluation = plugins.evaluate_results(backend, session, None)
+            evaluation_total = plugins.evaluate_results_total(backend, session, evaluation)
 
-        for ind in evaluation.index.levels[0]:
-            title = f"Series {ind}"
-            df = evaluation.loc[ind].copy()
-            df.sort_values(sort_by, ascending=reverse, inplace=True)
-            df["position"] = np.arange(1, len(df) + 1)
-            df.reset_index(inplace=True)
-            df.set_index("position", inplace=True)
-            print_pandas_dataframe(df, title)
-            console.print()
+            for ind in evaluation.index.levels[0]:
+                title = f"Series {ind}"
+                df = evaluation.loc[ind].copy()
+                df.sort_values(sort_by, ascending=reverse, inplace=True)
+                df["position"] = np.arange(1, len(df) + 1)
+                df.reset_index(inplace=True)
+                df.set_index("position", inplace=True)
+                print_pandas_dataframe(df, title)
+                console.print()
 
-        print_pandas_dataframe(evaluation_total, "Total")
+            print_pandas_dataframe(evaluation_total, "Total")
     except KeyError:
         console.print_exception()
 
@@ -64,5 +65,6 @@ def show(backend: Backend, sort_by: str | None, reverse: bool):
 )
 def report(backend: Backend, output_file: Path):
     """Create a HTML report page which displays the evaluated game results."""
-    code = plugins.report_standalone(backend)
-    output_file.write_text(code)
+    with backend.get_session() as session:
+        code = plugins.report_standalone(backend, session)
+        output_file.write_text(code)

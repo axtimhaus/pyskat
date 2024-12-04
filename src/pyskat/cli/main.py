@@ -13,10 +13,20 @@ pass_backend = click.make_pass_decorator(Backend)
     "-d",
     "--database-file",
     type=click.Path(dir_okay=False, path_type=Path),
-    default=Path("pyskat_db.json"),
+    default=Path("pyskat.db"),
+    help="The path where to store the SQLite database file.",
 )
-def main(ctx, database_file: Path):
-    ctx.obj = Backend(database_file)
+@click.option(
+    "-c",
+    "--connection-string",
+    type=click.STRING,
+    default=None,
+    help="An explicit connection string to a SQL database. Takes precedence over --database-file.",
+)
+def main(ctx, database_file: Path, connection_string: str):
+    if not connection_string:
+        connection_string = f"sqlite:///{database_file.resolve()}"
+    ctx.obj = Backend(connection_string)
 
 
 @main.command()

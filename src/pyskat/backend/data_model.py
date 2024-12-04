@@ -2,77 +2,78 @@ from datetime import datetime
 from typing import Iterable
 
 import pandas as pd
-from pydantic import BaseModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 
 
-class Player(BaseModel):
-    id: int = Field(ge=0)
+class TablePlayerLink(SQLModel, table=True):
+    table_id: int = Field(gt=0, foreign_key="table.id", primary_key=True)
+    player_id: int = Field(gt=0, foreign_key="player.id", primary_key=True)
+
+
+class Player(SQLModel, table=True):
+    id: int | None = Field(gt=0, default=None, primary_key=True)
     name: str
-    active: bool = Field(default=True)
-    remarks: str = Field(default="")
+    active: bool = True
+    remarks: str = ""
+
+    results: list["Result"] = Relationship(back_populates="player")
+    tables: list["Table"] = Relationship(link_model=TablePlayerLink, back_populates="players")
+
+    @property
+    def series(self) -> list["Series"]:
+        return [t.series for t in self.tables]
 
 
-class Table(BaseModel):
-    series_id: int = Field(gt=0)
-    table_id: int | None = Field(gt=0)
-    player1_id: int = Field(ge=0)
-    player2_id: int = Field(ge=0)
-    player3_id: int = Field(ge=0)
-    player4_id: int = Field(ge=0)
+class Table(SQLModel, table=True):
+    id: int | None = Field(gt=0, default=None, primary_key=True)
+    series_id: int = Field(gt=0, foreign_key="series.id")
     remarks: str = Field(default="")
+
+    players: list[Player] = Relationship(link_model=TablePlayerLink, back_populates="tables")
+    series: "Series" = Relationship(back_populates="tables")
 
     @property
     def player_ids(self) -> list[int]:
-        players = [self.player1_id, self.player2_id, self.player3_id, self.player4_id]
-
-        while True:
-            try:
-                players.remove(0)
-            except ValueError:
-                break
-
-        return players
+        return [p.id for p in self.players if p.id is not None]
 
     @property
     def size(self) -> int:
         return len(self.player_ids)
 
 
-class Series(BaseModel):
-    id: int = Field(ge=0)
-    name: str = Field(default="")
+class Series(SQLModel, table=True):
+    id: int | None = Field(ge=0, default=None, primary_key=True)
+    name: str = ""
     date: datetime
-    remarks: str = Field(default="")
+    remarks: str = ""
+
+    tables: list[Table] = Relationship(back_populates="series")
+    results: list["Result"] = Relationship(back_populates="series")
+
+    @property
+    def players(self) -> list[Player]:
+        return [p for t in self.tables for p in t.players]
 
 
-class TableResult(BaseModel):
-    series_id: int = Field(gt=0)
-    player_id: int = Field(gt=0)
+class Result(SQLModel, table=True):
+    series_id: int = Field(default=0, gt=0, foreign_key="series.id", primary_key=True)
+    player_id: int = Field(default=0, gt=0, foreign_key="player.id", primary_key=True)
     points: int
     won: int = Field(ge=0)
     lost: int = Field(ge=0)
-    remarks: str = Field(default="")
+    remarks: str = ""
 
-
-class TableEvaluation(TableResult):
-    won_points: int = Field(ge=0)
-    lost_points: int = Field(le=0)
-    opponents_lost: int = Field(ge=0)
-    opponents_lost_points: int = Field(ge=0)
-    score: int
-
-
-class TotalResult:
-    player_id: int = Field(gt=0)
-    series_scores: list[int]
-    total_score: int
+    series: Series = Relationship(back_populates="results")
+    player: Player = Relationship(back_populates="results")
 
 
 def to_pandas(
-    data: BaseModel | Iterable[BaseModel], model_type: type[BaseModel], index_cols: str | list[str]
+    data: SQLModel | Iterable[SQLModel],
+    model_type: type[SQLModel],
+    index_cols: str | list[str],
 ) -> pd.DataFrame:
-    if isinstance(data, BaseModel):
-        df = pd.DataFrame[data.model_dump()]
+    if isinstance(data, SQLModel):
+        df = pd.DataFrame(data.model_dump())
     else:
         if not data:
             cols = list(model_type.model_fields.keys())

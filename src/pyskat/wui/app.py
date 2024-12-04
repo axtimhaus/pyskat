@@ -22,18 +22,23 @@ def create_app(
     if theme:
         app.config["THEME"] = theme
 
-    def provide_backend():
+    def provide_backend_and_session():
         from flask import g
 
         g.backend = backend
+        g.session = backend.get_session()
 
-    app.before_request(provide_backend)
+    def close_session(error):
+        from flask import g
+
+        g.session.close()
+
+    app.before_request(provide_backend_and_session)
+    app.teardown_request(close_session)
 
     @app.route("/")
     def index():
-        return render_template(
-            "index.html"
-        )
+        return render_template("index.html")
 
     from . import players
 

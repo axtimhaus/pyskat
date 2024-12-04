@@ -12,22 +12,22 @@ def index(series_id):
     series_id = series_id or session.get("current_series", None)
 
     if series_id:
-        tables_list = g.backend.tables.all(series_id)
-        results = g.backend.results.all_for_series(series_id)
+        tables_list = g.backend.tables(g.session).all_for_series(series_id)
+        results = g.backend.results(g.session).all_for_series(series_id)
     else:
         flash("Please select a series on the series page to use this page.", "warning")
         tables_list = []
         results = []
 
-    players=g.backend.players.all()
-    series = g.backend.series.get(series_id)
+    players = g.backend.players(g.session).all()
+    series = g.backend.series(g.session).get(series_id)
 
     return render_template(
         "results.html",
         series=series,
         tables=tables_list,
         players={p.id: p for p in players},
-        results={r.player_id : r for r in results}
+        results={r.player_id: r for r in results},
     )
 
 
@@ -42,7 +42,7 @@ def add(series_id, player_id):
         abort(400, description="Invalid form data submitted.")
 
     try:
-        g.backend.results.add(
+        g.backend.results(g.session).add(
             series_id=series_id,
             player_id=player_id,
             points=points,
@@ -69,7 +69,7 @@ def update(series_id: int, player_id: int):
         abort(400, description="Invalid form data submitted.")
 
     try:
-        g.backend.results.update(
+        g.backend.results(g.session).update(
             series_id=series_id,
             player_id=player_id,
             points=points,
@@ -88,7 +88,7 @@ def update(series_id: int, player_id: int):
 @bp.post("/remove/<int:series_id>/<int:player_id>")
 def remove(series_id: int, player_id: int):
     try:
-        g.backend.results.remove(series_id, player_id)
+        g.backend.results(g.session).remove(series_id, player_id)
     except KeyError:
         flash_result_not_found(series_id, player_id)
     return redirect_to_index(series_id)
@@ -102,6 +102,3 @@ def redirect_to_index(series_id):
     if series_id == session.get("current_series"):
         series_id = None
     return redirect(url_for("results.index", series_id=series_id))
-
-
-

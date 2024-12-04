@@ -1,18 +1,12 @@
 from datetime import datetime
 
-import numpy as np
-import pandas as pd
-from tinydb.queries import QueryLike
-
-from .backend import Backend
 from .data_model import Series
-from .helpers import update_if_not_none
+from sqlmodel import select, Session
 
 
 class SeriesTable:
-    def __init__(self, backend: Backend):
-        self._backend = backend
-        self._table = self._backend.db.table("series")
+    def __init__(self, session: Session):
+        self._session = session
 
     def add(
         self,
@@ -22,12 +16,13 @@ class SeriesTable:
     ) -> Series:
         """Add a new series to the database."""
         series = Series(
-            id=0,
             name=name,
             date=date,
             remarks=remarks or "",
         )
-        series.id = self._table.insert(series.model_dump(mode="json", exclude={"id"}))
+        self._session.add(series)
+        self._session.commit()
+        self._session.refresh(series)
         return series
 
     def update(
@@ -38,49 +33,37 @@ class SeriesTable:
         remarks: str | None = None,
     ) -> Series:
         """Update an existing series in the database."""
-        original = self._table.get(doc_id=id)
+        series = self._session.get(Series, id) or raise_series_not_found(id)
 
-        if not original:
-            raise_series_not_found(id)
+        if name is not None:
+            series.name = name
 
-        updated = update_if_not_none(
-            original,
-            name=name,
-            date=date,
-            remarks=remarks,
-        )
-        series = Series(id=id, **updated)
+        if date is not None:
+            series.date = date
 
-        self._table.update(series.model_dump(mode="json", exclude={"id"}), doc_ids=[id])
+        if remarks is not None:
+            series.remarks = remarks
+
+        self._session.add(series)
+        self._session.commit()
+        self._session.refresh(series)
         return series
 
     def remove(self, id: int) -> None:
         """Remove a series from the database."""
-        result = self._table.remove(doc_ids=[id])
-        if not result:
-            raise_series_not_found(id)
+        series = self._session.get(Series, id) or raise_series_not_found(id)
+        self._session.delete(series)
+        self._session.commit()
 
     def get(self, id: int) -> Series:
         """Get a series from the database."""
-        result = self._table.get(doc_id=id)
-
-        if not result:
-            raise_series_not_found(id)
-
-        series = Series(id=id, **result)
-        return series
+        series = self._session.get(Series, id)
+        return series or raise_series_not_found(id)
 
     def all(self) -> list[Series]:
         """Get a list of all series in the database."""
-        result = self._table.all()
-        series = [Series(id=r.doc_id, **r) for r in result]
-        return series
-
-    def query(self, query: QueryLike) -> list[Series]:
-        """Get the results of a TinyDB query."""
-        result = self._table.search(query)
-        series = [Series(id=r.doc_id, **r) for r in result]
-        return series
+        series = self._session.exec(select(Series)).all()
+        return list(series)
 
 
 def raise_series_not_found(id: int):

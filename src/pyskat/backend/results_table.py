@@ -1,24 +1,15 @@
-import pandas as pd
-from tinydb.queries import QueryLike, Query
-from tinydb.table import Document
+from .data_model import Result, Series
+from sqlmodel import select, Session
+from typing import TYPE_CHECKING
 
-from .backend import Backend
-from .data_model import TableResult, Table
-from .helpers import update_if_not_none
+if TYPE_CHECKING:
+    from .backend import Backend
 
 
-class TableResultsTable:
-    def __init__(self, backend: Backend, id_module=1000):
+class ResultsTable:
+    def __init__(self, backend: "Backend", session: Session):
+        self._session = session
         self._backend = backend
-        self._table = self._backend.db.table("results")
-        self.id_module = id_module
-
-    def make_id(
-        self,
-        series_id: int,
-        player_id: int,
-    ):
-        return series_id * self.id_module + player_id
 
     def add(
         self,
@@ -28,9 +19,9 @@ class TableResultsTable:
         won: int,
         lost: int,
         remarks: str | None = None,
-    ) -> TableResult:
+    ) -> Result:
         """Add a new result to the database."""
-        result = TableResult(
+        result = Result(
             series_id=series_id,
             player_id=player_id,
             points=points,
@@ -38,13 +29,9 @@ class TableResultsTable:
             lost=lost,
             remarks=remarks or "",
         )
-
-        id = self.make_id(series_id, player_id)
-
-        if self._table.contains(doc_id=id):
-            raise KeyError(f"Result for series {series_id} and player {player_id} already present.")
-
-        self._table.insert(Document(result.model_dump(mode="json"), id))
+        self._session.add(result)
+        self._session.commit()
+        self._session.refresh(result)
         return result
 
     def update(
@@ -55,24 +42,25 @@ class TableResultsTable:
         won: int | None = None,
         lost: int | None = None,
         remarks: str | None = None,
-    ) -> TableResult:
+    ) -> Result:
         """Update an existing result in the database."""
-        id = self.make_id(series_id, player_id)
-        original = self._table.get(doc_id=id)
+        result = self._session.get(Result, (series_id, player_id)) or raise_result_not_found(series_id, player_id)
 
-        if not original:
-            raise_result_not_found(series_id, player_id)
+        if points is not None:
+            result.points = points
 
-        updated = update_if_not_none(
-            original,
-            points=points,
-            won=won,
-            lost=lost,
-            remarks=remarks,
-        )
-        result = TableResult(**updated)
+        if won is not None:
+            result.won = won
 
-        self._table.update(result.model_dump(mode="json"), doc_ids=[id])
+        if lost is not None:
+            result.lost = lost
+
+        if remarks is not None:
+            result.remarks = remarks
+
+        self._session.add(result)
+        self._session.commit()
+        self._session.refresh(result)
         return result
 
     def remove(
@@ -81,50 +69,37 @@ class TableResultsTable:
         player_id: int,
     ) -> None:
         """Remove a result from the database."""
-        id = self.make_id(series_id, player_id)
-        result = self._table.remove(doc_ids=[id])
-        if not result:
-            raise_result_not_found(series_id, player_id)
+        result = self._session.get(Result, (series_id, player_id)) or raise_result_not_found(series_id, player_id)
+        self._session.delete(result)
+        self._session.commit()
 
     def get(
         self,
         series_id: int,
         player_id: int,
-    ) -> TableResult:
+    ) -> Result:
         """Get a result from the database."""
-        id = self.make_id(series_id, player_id)
-        result = self._table.get(doc_id=id)
+        return self._session.get(Result, (series_id, player_id)) or raise_result_not_found(series_id, player_id)
 
-        if not result:
-            raise_result_not_found(series_id, player_id)
-
-        result = TableResult(id=id, **result)
-        return result
-
-    def all(self) -> list[TableResult]:
+    def all(self) -> list[Result]:
         """Get a list of all results in the database."""
-        result = self._table.all()
-        results = [TableResult(id=p.doc_id, **p) for p in result]
-        return results
+        results = self._session.exec(select(Result)).all()
+        return list(results)
 
-    def query(self, query: QueryLike) -> list[TableResult]:
-        """Get the results of a TinyDB query."""
-        result = self._table.search(query)
-        results = [TableResult(id=p.doc_id, **p) for p in result]
-        return results
-
-    def all_for_series(self, series_id: int) -> list[TableResult]:
+    def all_for_series(self, series_id: int) -> list[Result]:
         """Get all the results for a defined series in the database."""
-        results = self._table.search(Query().series_id == series_id)
-        results = [TableResult(id=p.doc_id, **p) for p in results]
-        return results
+        results = self._session.exec(select(Result).where(Result.series_id == series_id)).all()
+        return list(results)
 
     def clear_for_series(self, series_id: int) -> None:
         """Remove all the results for a defined series in the database."""
-        self._table.remove(Query().series_id == series_id)
+        results = self._session.exec(select(Result).where(Result.series_id == series_id))
+        for r in results:
+            self._session.delete(r)
+        self._session.commit()
 
     def get_opponents_lost(self, series_id: int, player_id: int) -> int:
-        table = self._backend.tables.get_table_with_player(series_id, player_id)
+        table = self._backend.tables(self._session).get_table_with_player(series_id, player_id)
         other_players = table.player_ids
         other_players.remove(player_id)
         others_lost = [self.get(series_id, p).lost for p in other_players]

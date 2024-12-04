@@ -12,22 +12,23 @@ def index(series_id):
     series_id = series_id or session.get("current_series", None)
 
     if series_id:
-        tables_list = g.backend.tables.all(series_id)
-        results = g.backend.results.all_for_series(series_id)
+        series = g.backend.series(g.session).get(series_id)
+        tables_list = g.backend.tables(g.session).all_for_series(series_id)
+        results = g.backend.results(g.session).all_for_series(series_id)
     else:
         flash("Please select a series on the series page to use this page.", "warning")
         tables_list = []
         results = []
+        series = None
 
-    players=g.backend.players.all()
-    series = g.backend.series.get(series_id)
+    players = g.backend.players(g.session).all()
 
     return render_template(
         "tables.html",
         series=series,
         tables=tables_list,
         players={p.id: p for p in players},
-        results={r.player_id : r for r in results}
+        results={r.player_id: r for r in results},
     )
 
 
@@ -46,12 +47,12 @@ def add(series_id):
         abort(400, description="Invalid form data submitted.")
 
     try:
-        g.backend.tables.add(
+        g.backend.tables(g.session).add(
             series_id=series_id,
             player1_id=player1_id,
             player2_id=player2_id,
             player3_id=player3_id,
-            player4_id=player4_id,
+            player4_id=(player4_id != "" and player4_id != "0") or None,
             remarks=remarks,
         )
     except ValidationError as e:
@@ -74,13 +75,13 @@ def update(series_id: int, table_id: int):
         abort(400, description="Invalid form data submitted.")
 
     try:
-        g.backend.tables.update(
+        g.backend.tables(g.session).update(
             series_id=series_id,
-            table_id=table_id,
+            id=table_id,
             player1_id=player1_id,
             player2_id=player2_id,
             player3_id=player3_id,
-            player4_id=player4_id,
+            player4_id=(player4_id != "" and player4_id != "0") or None,
             remarks=remarks,
         )
     except KeyError:
@@ -94,7 +95,7 @@ def update(series_id: int, table_id: int):
 @bp.post("/remove/<int:series_id>/<int:table_id>")
 def remove(series_id: int, table_id: int):
     try:
-        g.backend.tables.remove(series_id, table_id)
+        g.backend.tables(g.session).remove(series_id, table_id)
     except KeyError:
         flash_table_not_found(series_id, table_id)
     return redirect_to_index(series_id)
@@ -114,7 +115,7 @@ def redirect_to_index(series_id):
 @bp.get("/check/<int:series_id>")
 def check(series_id):
     series_id = series_id or session.get("current_series", None)
-    tables = g.backend.tables.all(series_id)
+    tables = g.backend.tables(g.session).all_for_series(series_id)
 
     is_valid = True
     series_players = []
@@ -140,13 +141,16 @@ def check(series_id):
 
 
 def flash_player_multiply_present_in_table(table_id: int, player_id: int):
-    player = g.backend.players.get(player_id)
+    player = g.backend.players(g.session).get(player_id)
     flash(f"Player {player.name} ({player.id}) is defined multiple times at table {table_id}.", "warning")
 
 
 def flash_player_multiply_present_in_series(table_id: int, player_id: int):
-    player = g.backend.players.get(player_id)
-    flash(f"Player {player.name} ({player.id}) is defined multiple times in series (duplicate at table {table_id}).", "warning")
+    player = g.backend.players(g.session).get(player_id)
+    flash(
+        f"Player {player.name} ({player.id}) is defined multiple times in series (duplicate at table {table_id}).",
+        "warning",
+    )
 
 
 @bp.post("/shuffle", defaults=dict(series_id=None))
@@ -163,7 +167,7 @@ def shuffle(series_id):
         abort(400, description="Invalid form data submitted.")
 
     try:
-        g.backend.tables.shuffle_players_for_series(
+        g.backend.tables(g.session).shuffle_players_for_series(
             series_id=series_id,
             active_only=active_only,
             include=include,
