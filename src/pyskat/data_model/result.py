@@ -31,8 +31,7 @@ class ResultPublic(ResultBase):
 
 
 class ResultCreate(ResultBase):
-    player_id: int = Field(gt=0)
-    table_id: int = Field(gt=0)
+    pass
 
 
 class ResultUpdate(ResultBase):
