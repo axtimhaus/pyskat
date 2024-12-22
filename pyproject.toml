@@ -20,17 +20,16 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 dependencies = [
-    "click ~= 8.1",
-    "click-repl ~= 0.3",
+    "typer ~= 0.15.0",
+    "fastapi ~= 0.115.0",
+    "sqlmodel ~= 0.0.22",
+    "pydantic-settings ~= 2.7",
+    "uvicorn",
     "pandas ~= 2.2",
     "rich ~= 13.7",
-    "numpy ~= 1.26",
-    "sqlmodel ~= 0.0.22",
     "flask ~= 3.0",
     "pluggy ~= 1.2",
     "plotly ~= 5.24",
-    "fastapi ~= 0.115.0",
-    "pydantic-settings",
 ]
 
 [project.optional-dependencies]
