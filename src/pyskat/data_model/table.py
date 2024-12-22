@@ -1,19 +1,15 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import TYPE_CHECKING
 
-from .unset import Unset, UNSET
+from pyskat.data_model.unset import Unset, UNSET
+from pyskat.data_model.links import TablePlayerLink
 
 if TYPE_CHECKING:
-    from .player import Player
-    from .series import Series
-    from .result import Result
+    from pyskat.data_model.player import Player
+    from pyskat.data_model.series import Series
+    from pyskat.data_model.result import Result
 
-__all__ = ["Table", "TablePublic", "TableCreate", "TableUpdate", "TablePlayerLink"]
-
-
-class TablePlayerLink(SQLModel, table=True):
-    table_id: int = Field(gt=0, foreign_key="table.id", primary_key=True)
-    player_id: int = Field(gt=0, foreign_key="player.id", primary_key=True)
+__all__ = ["Table", "TablePublic", "TableCreate", "TableUpdate"]
 
 
 class TableBase(SQLModel):
@@ -24,9 +20,9 @@ class TableBase(SQLModel):
 class Table(TableBase, table=True):
     id: int | None = Field(gt=0, default=None, primary_key=True)
 
-    players: list[Player] = Relationship(link_model=TablePlayerLink, back_populates="tables")
-    results: list[Result] = Relationship(back_populates="table")
-    series: Series = Relationship(back_populates="tables")
+    players: list["Player"] = Relationship(link_model=TablePlayerLink, back_populates="tables")
+    results: list["Result"] = Relationship(back_populates="table")
+    series: "Series" = Relationship(back_populates="tables")
 
     @property
     def player_ids(self) -> list[int]:

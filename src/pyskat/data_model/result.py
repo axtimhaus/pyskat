@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 from .unset import UNSET, Unset
 
 if TYPE_CHECKING:
-    from .table import Table
-    from .player import Player
+    from pyskat.data_model.table import Table
+    from pyskat.data_model.player import Player
 
 
 class ResultBase(SQLModel):
@@ -21,8 +21,8 @@ class Result(ResultBase, table=True):
     player_id: int = Field(default=0, gt=0, foreign_key="player.id", primary_key=True)
     table_id: int = Field(default=0, gt=0, foreign_key="table.id", primary_key=True)
 
-    table: Table = Relationship(back_populates="results")
-    player: Player = Relationship(back_populates="results")
+    table: "Table" = Relationship(back_populates="results")
+    player: "Player" = Relationship(back_populates="results")
 
 
 class ResultPublic(ResultBase):
