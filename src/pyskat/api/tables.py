@@ -20,6 +20,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
         table = session.get(Table, table_id)
         if not table:
             raise_not_found(table_id)
+        return table
 
     @router.post("/", response_model=TablePublic)
     async def create(table: TableCreate, session: dependencies.session):

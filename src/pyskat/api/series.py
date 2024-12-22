@@ -20,6 +20,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
         series = session.get(Series, series_id)
         if not series:
             raise_not_found(series_id)
+        return series
 
     @router.post("/", response_model=SeriesPublic)
     async def create(series: SeriesCreate, session: dependencies.session):

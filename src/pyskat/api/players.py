@@ -20,10 +20,11 @@ def create_router(dependencies: Dependencies) -> APIRouter:
         player = session.get(Player, player_id)
         if not player:
             raise_not_found(player_id)
+        return player
 
     @router.post("/", response_model=PlayerPublic)
-    async def create(player: PlayerCreate, session: dependencies.session):
-        db_player = Player.model_valplayer_idate(player)
+    def create(player: PlayerCreate, session: dependencies.session):
+        db_player = Player.model_validate(player)
         session.add(db_player)
         session.commit()
         return db_player
