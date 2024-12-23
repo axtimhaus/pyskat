@@ -24,7 +24,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.post("/", response_model=SeriesPublic)
     async def create(series: SeriesCreate, session: dependencies.session):
-        db_series = Series.model_valseries_idate(series)
+        db_series = Series.model_validate(series)
         session.add(db_series)
         session.commit()
         return db_series

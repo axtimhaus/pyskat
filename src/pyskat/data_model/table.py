@@ -33,9 +33,9 @@ class Table(TableBase, table=True):
         return len(self.player_ids)
 
 
-class TablePublic(SQLModel):
+class TablePublic(TableBase):
     id: int = Field(gt=0, primary_key=True)
-    size: int = Field(ge=3, le=4)
+    size: int
 
 
 class TableCreate(TableBase):

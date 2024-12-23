@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from pyskat.api.app import Dependencies
-from pyskat.data_model import Table, TablePublic, TableCreate, TableUpdate
+from pyskat.data_model import Table, TablePublic, TableCreate, TableUpdate, Series
 
 
 def create_router(dependencies: Dependencies) -> APIRouter:
@@ -24,7 +24,11 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.post("/", response_model=TablePublic)
     async def create(table: TableCreate, session: dependencies.session):
-        db_table = Table.model_valtable_idate(table)
+        db_table = Table.model_validate(table)
+
+        if db_table.series_id is not None and session.get(Series, db_table.series_id) is None:
+            raise HTTPException(status_code=404, detail=f"Series {db_table.series_id} not found")
+
         session.add(db_table)
         session.commit()
         return db_table
@@ -32,10 +36,16 @@ def create_router(dependencies: Dependencies) -> APIRouter:
     @router.patch("/{table_id}", response_model=TablePublic)
     async def update(table_id: int, table: TableUpdate, session: dependencies.session):
         db_table = session.get(Table, table_id)
+
         if not db_table:
             raise_not_found(table_id)
+
         table_data = table.model_dump(exclude_unset=True)
         db_table.sqlmodel_update(table_data)
+
+        if db_table.series_id is not None and session.get(Series, db_table.series_id) is None:
+            raise HTTPException(status_code=404, detail=f"Series {db_table.series_id} not found")
+
         session.add(db_table)
         session.commit()
         session.refresh(db_table)
