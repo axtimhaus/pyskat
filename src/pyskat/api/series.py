@@ -17,10 +17,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.get("/{series_id}", response_model=SeriesPublic)
     async def get_single(series_id: int, session: dependencies.session):
-        series = session.get(Series, series_id)
-        if not series:
-            raise_not_found(series_id)
-        return series
+        return session.get(Series, series_id) or raise_not_found(series_id)
 
     @router.post("/", response_model=SeriesPublic)
     async def create(series: SeriesCreate, session: dependencies.session):
@@ -31,9 +28,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.patch("/{series_id}", response_model=SeriesPublic)
     async def update(series_id: int, series: SeriesUpdate, session: dependencies.session):
-        db_series = session.get(Series, series_id)
-        if not db_series:
-            raise_not_found(series_id)
+        db_series = session.get(Series, series_id) or raise_not_found(series_id)
         series_data = series.model_dump(exclude_unset=True)
         db_series.sqlmodel_update(series_data)
         session.add(db_series)
@@ -43,9 +38,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.delete("/{series_id}", status_code=204)
     async def delete(series_id: int, session: dependencies.session):
-        db_series = session.get(Series, series_id)
-        if not db_series:
-            raise_not_found(series_id)
+        db_series = session.get(Series, series_id) or raise_not_found(series_id)
         session.delete(db_series)
         session.commit()
 

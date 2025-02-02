@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from sqlmodel import select
+from sqlmodel import select, Session
 
 from pyskat.api.app import Dependencies
-from pyskat.data_model import Table, TablePublic, TableCreate, TableUpdate, Series
+from pyskat.data_model import Table, TablePublic, TableCreate, TableUpdate, Series, PlayerPublic
 
 
 def create_router(dependencies: Dependencies) -> APIRouter:
@@ -17,10 +17,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.get("/{table_id}", response_model=TablePublic)
     async def get_single(table_id: int, session: dependencies.session):
-        table = session.get(Table, table_id)
-        if not table:
-            raise_not_found(table_id)
-        return table
+        return session.get(Table, table_id) or raise_not_found(table_id)
 
     @router.post("/", response_model=TablePublic)
     async def create(table: TableCreate, session: dependencies.session):
@@ -35,10 +32,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.patch("/{table_id}", response_model=TablePublic)
     async def update(table_id: int, table: TableUpdate, session: dependencies.session):
-        db_table = session.get(Table, table_id)
-
-        if not db_table:
-            raise_not_found(table_id)
+        db_table = session.get(Table, table_id) or raise_not_found(table_id)
 
         table_data = table.model_dump(exclude_unset=True)
         db_table.sqlmodel_update(table_data)
@@ -53,9 +47,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.delete("/{table_id}", status_code=204)
     async def delete(table_id: int, session: dependencies.session):
-        db_table = session.get(Table, table_id)
-        if not db_table:
-            raise_not_found(table_id)
+        db_table = session.get(Table, table_id) or raise_not_found(table_id)
         session.delete(db_table)
         session.commit()
 

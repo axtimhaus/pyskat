@@ -17,10 +17,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.get("/{table_id}/{player_id}", response_model=ResultPublic)
     async def get_single(player_id: int, table_id: int, session: dependencies.session):
-        result = session.get(Result, dict(table_id=table_id, player_id=player_id))
-        if not result:
-            raise_not_found(table_id, player_id)
-        return result
+        return session.get(Result, dict(table_id=table_id, player_id=player_id)) or raise_not_found(table_id, player_id)
 
     @router.post("/{table_id}/{player_id}", response_model=ResultPublic)
     async def create(player_id: int, table_id: int, result: ResultCreate, session: dependencies.session):
@@ -31,9 +28,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.patch("/{table_id}/{player_id}", response_model=ResultPublic)
     async def update(player_id: int, table_id: int, result: ResultUpdate, session: dependencies.session):
-        db_result = session.get(Result, dict(table_id=table_id, player_id=player_id))
-        if not db_result:
-            raise_not_found(table_id, player_id)
+        db_result = session.get(Result, dict(table_id=table_id, player_id=player_id)) or raise_not_found(table_id, player_id)
         result_data = result.model_dump(exclude_unset=True)
         db_result.sqlmodel_update(result_data)
         session.add(db_result)
@@ -43,9 +38,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.delete("/{table_id}/{player_id}", status_code=204)
     async def delete(player_id: int, table_id: int, session: dependencies.session):
-        db_result = session.get(Result, dict(table_id=table_id, player_id=player_id))
-        if not db_result:
-            raise_not_found(table_id, player_id)
+        db_result = session.get(Result, dict(table_id=table_id, player_id=player_id)) or raise_not_found(table_id, player_id)
         session.delete(db_result)
         session.commit()
 
