@@ -4,7 +4,13 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from pyskat.api.app import Dependencies
-from pyskat.data_model import Result, ResultPublic, ResultCreate, ResultUpdate
+from pyskat.data_model import (
+    Result,
+    ResultPublic,
+    ResultCreate,
+    ResultUpdate,
+    ResultPublicDeep,
+)
 
 
 def create_router(dependencies: Dependencies) -> APIRouter:
@@ -17,7 +23,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
     async def get(db: dependencies.db):
         return db.exec(select(Result)).all()
 
-    @router.get("/{table_id}/{player_id}", response_model=ResultPublic)
+    @router.get("/{table_id}/{player_id}", response_model=ResultPublicDeep)
     async def get_single(player_id: int, table_id: int, db: dependencies.db):
         return db.get(
             Result, dict(table_id=table_id, player_id=player_id)

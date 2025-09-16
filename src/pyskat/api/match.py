@@ -1,17 +1,15 @@
 # pyright: reportInvalidTypeForm=false
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import select, Session
+from sqlmodel import select
 
 from pyskat.api.app import Dependencies
 from pyskat.data_model import (
     Match,
     MatchPublic,
+    MatchPublicDeep,
     MatchCreate,
     MatchUpdate,
-    Session,
-    PlayerPublic,
-    Player,
 )
 
 
@@ -25,7 +23,7 @@ def create_router(dependencies: Dependencies) -> APIRouter:
     async def get(db: dependencies.db):
         return db.exec(select(Match)).all()
 
-    @router.get("/{match_id}", response_model=MatchPublic)
+    @router.get("/{match_id}", response_model=MatchPublicDeep)
     async def get_single(match_id: int, db: dependencies.db):
         return db.get(Match, match_id) or raise_not_found(match_id)
 
