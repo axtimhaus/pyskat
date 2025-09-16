@@ -1,12 +1,12 @@
+# pyright: reportIncompatibleVariableOverride=false
+
 from sqlmodel import SQLModel, Field, Relationship
 from typing import TYPE_CHECKING
 
-from pyskat.data_model.unset import Unset, UNSET
-
 if TYPE_CHECKING:
-    from pyskat.data_model.series import Series
     from pyskat.data_model.result import Result
-    from pyskat.data_model.table import Table
+    from pyskat.data_model.match import Match
+    from pyskat.data_model.player_match_link import PlayerMatchLink
 
 __all__ = ["Player", "PlayerPublic", "PlayerCreate", "PlayerUpdate"]
 
@@ -20,6 +20,9 @@ class PlayerBase(SQLModel):
 class Player(PlayerBase, table=True):
     id: int | None = Field(gt=0, default=None, primary_key=True)
 
+    matches: list["Match"] = Relationship(
+        back_populates="players", link_model=PlayerMatchLink
+    )
     results: list["Result"] = Relationship(back_populates="player")
 
 
@@ -31,7 +34,7 @@ class PlayerCreate(PlayerBase):
     pass
 
 
-class PlayerUpdate(PlayerBase):
-    name: str | Unset = UNSET
-    active: bool | Unset = UNSET
-    remarks: str | Unset = UNSET
+class PlayerUpdate(SQLModel):
+    name: str | None = None
+    active: bool | None = None
+    remarks: str | None = None

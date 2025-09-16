@@ -1,3 +1,5 @@
+# pyright: reportInvalidTypeForm=false
+
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
@@ -12,35 +14,35 @@ def create_router(dependencies: Dependencies) -> APIRouter:
     )
 
     @router.get("/", response_model=list[PlayerPublic])
-    async def get(session: dependencies.session):
-        return session.exec(select(Player)).all()
+    async def get(db: dependencies.db):
+        return db.exec(select(Player)).all()
 
     @router.get("/{player_id}", response_model=PlayerPublic)
-    async def get_single(player_id: int, session: dependencies.session):
-        return session.get(Player, player_id) or raise_not_found(player_id)
+    async def get_single(player_id: int, db: dependencies.db):
+        return db.get(Player, player_id) or raise_not_found(player_id)
 
     @router.post("/", response_model=PlayerPublic)
-    def create(player: PlayerCreate, session: dependencies.session):
+    def create(player: PlayerCreate, db: dependencies.db):
         db_player = Player.model_validate(player)
-        session.add(db_player)
-        session.commit()
+        db.add(db_player)
+        db.commit()
         return db_player
 
     @router.patch("/{player_id}", response_model=PlayerPublic)
-    async def update(player_id: int, player: PlayerUpdate, session: dependencies.session):
-        db_player = session.get(Player, player_id) or raise_not_found(player_id)
+    async def update(player_id: int, player: PlayerUpdate, db: dependencies.db):
+        db_player = db.get(Player, player_id) or raise_not_found(player_id)
         player_data = player.model_dump(exclude_unset=True)
         db_player.sqlmodel_update(player_data)
-        session.add(db_player)
-        session.commit()
-        session.refresh(db_player)
+        db.add(db_player)
+        db.commit()
+        db.refresh(db_player)
         return db_player
 
     @router.delete("/{player_id}", status_code=204)
-    async def delete(player_id: int, session: dependencies.session):
-        db_player = session.get(Player, player_id) or raise_not_found(player_id)
-        session.delete(db_player)
-        session.commit()
+    async def delete(player_id: int, db: dependencies.db):
+        db_player = db.get(Player, player_id) or raise_not_found(player_id)
+        db.delete(db_player)
+        db.commit()
 
     return router
 

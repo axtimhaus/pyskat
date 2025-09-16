@@ -1,7 +1,12 @@
 from pyskat.data_model.player import Player, PlayerPublic, PlayerCreate, PlayerUpdate
 from pyskat.data_model.result import Result, ResultPublic, ResultCreate, ResultUpdate
-from pyskat.data_model.series import Series, SeriesPublic, SeriesCreate, SeriesUpdate
-from pyskat.data_model.table import Table, TablePublic, TableCreate, TableUpdate
+from pyskat.data_model.session import (
+    Session,
+    SessionPublic,
+    SessionCreate,
+    SessionUpdate,
+)
+from pyskat.data_model.match import Match, MatchPublic, MatchCreate, MatchUpdate
 
 __all__ = [
     "Player",
@@ -12,12 +17,12 @@ __all__ = [
     "ResultPublic",
     "ResultCreate",
     "ResultUpdate",
-    "Series",
-    "SeriesPublic",
-    "SeriesCreate",
-    "SeriesUpdate",
-    "Table",
-    "TablePublic",
-    "TableCreate",
-    "TableUpdate",
+    "Session",
+    "SessionPublic",
+    "SessionCreate",
+    "SessionUpdate",
+    "Match",
+    "MatchPublic",
+    "MatchCreate",
+    "MatchUpdate",
 ]
