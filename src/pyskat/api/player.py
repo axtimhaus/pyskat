@@ -15,8 +15,8 @@ from pyskat.data_model import (
 
 def create_router(dependencies: Dependencies) -> APIRouter:
     router = APIRouter(
-        prefix="/players",
-        tags=["players"],
+        prefix="/player",
+        tags=["player"],
     )
 
     @router.get("/", response_model=list[PlayerPublic])

@@ -20,7 +20,7 @@ The following features are already working:
 The following planned features are **not** working:
 
 - TUI interface with same feature set as the CLI.
-- HTML printout of players, series, results.
+- HTML printout of players, session, results.
 
 ## Installation
 
@@ -89,21 +89,21 @@ To remove a player:
 pyskat remove
 ```
 
-### Generating a Series
+### Generating a Session
 
-To distribute players randomly to tables (generating a series), use the `series generate` command. This will print out a
+To distribute players randomly to tables (generating a session), use the `session generate` command. This will print out a
 data sheet indexed by table ID with players placed at the tables, so that the current number of players in the database
 is efficiently distributed to four- and three-player tables.
 
 ```shell
-pyskat generate series
+pyskat generate session
 ```
 
 ### Entering Results
 
 Results are managed using the `result` command and its subcommands. Data for each command can be specified using
 options, or, if omitted are prompted.
-A result is meant as the result of a specific player in a specific series.
+A result is meant as the result of a specific player in a specific session.
 
 To add a new result:
 

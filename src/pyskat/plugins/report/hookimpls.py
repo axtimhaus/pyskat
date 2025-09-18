@@ -14,8 +14,8 @@ def result_table(backend: Backend, results: pd.DataFrame) -> str:
 
         for ind in results.index.levels[0]:
             if isinstance(ind, int):
-                series = backend.series(session).get(ind)
-                title = f"Series {ind} - {series.name}"
+                session = backend.session(session).get(ind)
+                title = f"Session {ind} - {session.name}"
             else:
                 title = str(ind).title()
             df = results.loc[ind].copy()

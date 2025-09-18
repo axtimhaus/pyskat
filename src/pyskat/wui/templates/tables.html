@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "macros.html" import modal_editor, modal_editor_open, player_name_id %}
-{% block title %}PySkat - Tables{% endblock %}
+{% block title %}PySkat - Matchs{% endblock %}
 {% block head %}{% endblock %}
 
 {% macro player_display(id) %}
@@ -9,16 +9,16 @@
 {% endmacro %}
 
 {% block content %}
-    <h1>Tables</h1>
+    <h1>Matchs</h1>
 
 
     <div class="btn-group">
-        {{ modal_editor_open("add-table", "Add New Table", "success") }}
-        {{ modal_editor_open("shuffle-tables", "Shuffle Players to Tables", "warning") }}
-        <a class="btn btn-primary" href="{{ url_for("tables.check", series_id=series.id) }}">Check Validity</a>
+        {{ modal_editor_open("add-table", "Add New Match", "success") }}
+        {{ modal_editor_open("shuffle-tables", "Shuffle Players to Matchs", "warning") }}
+        <a class="btn btn-primary" href="{{ url_for("tables.check", session_id=session.id) }}">Check Validity</a>
     </div>
 
-    {% call modal_editor("add-table", url_for("tables.add", series_id=series.id), "Add New Table", submit_label="Add", submit_color="success") %}
+    {% call modal_editor("add-table", url_for("tables.add", session_id=session.id), "Add New Match", submit_label="Add", submit_color="success") %}
         {% macro player_select(player_id) %}
             {% set input_id = "player{}_id".format(player_id) %}
             <div class="mb-3">
@@ -44,7 +44,7 @@
         </div>
     {% endcall %}
 
-    {% call modal_editor("shuffle-tables", url_for("tables.shuffle", series_id=series.id), "Shuffle Players to Tables", submit_label="Shuffle", submit_color="warning") %}
+    {% call modal_editor("shuffle-tables", url_for("tables.shuffle", session_id=session.id), "Shuffle Players to Matchs", submit_label="Shuffle", submit_color="warning") %}
         {% macro player_select(name, label) %}
             <div class="mb-3">
                 <label class="form-label h5 mt-3">{{ label }}</label>
@@ -113,12 +113,12 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="modal-update-table-{{- t.id -}}">Edit Table</h1>
+                            <h1 class="modal-title fs-5" id="modal-update-table-{{- t.id -}}">Edit Match</h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <form id="form-update-table-{{- t.id -}}" method="post"
-                                  action="{{ url_for("tables.update", series_id=series.id, table_id=t.id) }}">
+                                  action="{{ url_for("tables.update", session_id=session.id, table_id=t.id) }}">
                                 {% macro player_select(player_id) %}
                                     {% set input_id = "player{}_id".format(player_id) %}
                                     <div class="mb-3">
@@ -161,14 +161,14 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="modal-remove-table-{{- t.id -}}">Remove Table</h1>
+                            <h1 class="modal-title fs-5" id="modal-remove-table-{{- t.id -}}">Remove Match</h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             Really remove the table <strong>{{- t.name -}}</strong> with the ID
                             <strong>{{- t.id -}}</strong>?
                             <form id="form-remove-table-{{- t.id -}}" method="post"
-                                  action="{{ url_for("tables.remove", series_id=series.id, table_id=t.id) }}"></form>
+                                  action="{{ url_for("tables.remove", session_id=session.id, table_id=t.id) }}"></form>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

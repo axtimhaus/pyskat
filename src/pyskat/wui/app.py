@@ -13,7 +13,11 @@ def create_app(
     instance_directory: Path,
     theme: str | None = None,
 ):
-    app = Flask("pyskat.wui", instance_relative_config=True, instance_path=str(instance_directory.resolve()))
+    app = Flask(
+        "pyskat.wui",
+        instance_relative_config=True,
+        instance_path=str(instance_directory.resolve()),
+    )
     app.config.from_object(default_config)
 
     app.config.from_file("pyskat_config.toml", load=tomllib.load, silent=True)
@@ -44,9 +48,9 @@ def create_app(
 
     app.register_blueprint(players.bp)
 
-    from . import series
+    from . import session
 
-    app.register_blueprint(series.bp)
+    app.register_blueprint(session.bp)
 
     from . import tables
 

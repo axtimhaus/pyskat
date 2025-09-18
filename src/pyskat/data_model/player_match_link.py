@@ -1,36 +1,25 @@
 # pyright: reportIncompatibleVariableOverride=false
 
-from sqlmodel import SQLModel, Field, Relationship
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from pyskat.data_model.player import Player
-    from pyskat.data_model.match import Match
+from sqlmodel import SQLModel, Field
 
 __all__ = [
     "PlayerMatchLink",
     "PlayerMatchLinkPublic",
     "PlayerMatchLinkCreate",
-    "PlayerMatchLinkUpdate",
 ]
 
 
 class PlayerMatchLinkBase(SQLModel):
-    name: str
-    active: bool = True
-    remarks: str = ""
+    player_id: int = Field(default=None, foreign_key="player.id", primary_key=True)
+    match_id: int = Field(default=None, foreign_key="match.id", primary_key=True)
 
 
 class PlayerMatchLink(PlayerMatchLinkBase, table=True):
-    player_id: int | None = Field(
-        default=None, foreign_key="player.id", primary_key=True
-    )
-    match_id: int | None = Field(default=None, foreign_key="match.id", primary_key=True)
+    pass
 
 
 class PlayerMatchLinkPublic(PlayerMatchLinkBase):
-    player_id: int
-    match_id: int
+    pass
 
 
 class PlayerMatchLinkCreate(PlayerMatchLinkBase):

@@ -8,7 +8,9 @@ def add_players(client: TestClient, faker: Faker):
         active = faker.boolean()
         remarks = faker.word()
 
-        res = client.post("/players", json={"name": name, "active": active, "remarks": remarks})
+        res = client.post(
+            "/player", json={"name": name, "active": active, "remarks": remarks}
+        )
         assert res.status_code == 200
         yield {
             "id": i,
@@ -21,7 +23,7 @@ def add_players(client: TestClient, faker: Faker):
 def test_all(client, faker):
     created_players = list(add_players(client, faker))
 
-    res = client.get("/players")
+    res = client.get("/player")
     assert res.status_code == 200
     assert res.json() == created_players
 
@@ -30,11 +32,14 @@ def test_single(client, faker):
     created_players = list(add_players(client, faker))
 
     for p in created_players:
-        res = client.get(f"/players/{p['id']}")
+        res = client.get(f"/player/{p['id']}")
         assert res.status_code == 200
-        assert res.json() == p
+        res_json = res.json()
+        del res_json["results"]
+        del res_json["matches"]
+        assert res_json == p
 
 
 def test_single_non_existent(client, faker):
-    res = client.get(f"/players/{87537345873}")
+    res = client.get(f"/player/{87537345873}")
     assert res.status_code == 404

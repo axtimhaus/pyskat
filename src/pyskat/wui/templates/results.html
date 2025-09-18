@@ -17,7 +17,7 @@
                 {{ modal_editor_open("edit-result-{}".format(id), "Edit", "warning") }}
                 {{ modal_editor_open("remove-result-{}".format(id), "Remove", "danger") }}
             </div>
-            {% call modal_editor("edit-result-{}".format(id), url_for("results.update", series_id=series.id, player_id=id), "Edit Result", submit_label="Edit", submit_color="warning") %}
+            {% call modal_editor("edit-result-{}".format(id), url_for("results.update", session_id=session.id, player_id=id), "Edit Result", submit_label="Edit", submit_color="warning") %}
                 <div>
                     <label for="points" class="form-label">Sum of Game Points</label>
                     <input id="points" name="points" type="number" value="{{ r.points }}"
@@ -39,7 +39,7 @@
                            class="form-control"/>
                 </div>
             {% endcall %}
-            {% call modal_editor("remove-result-{}".format(id), url_for("results.remove", series_id=series.id, player_id=id), "Remove Result", submit_label="Remove", submit_color="danger") %}
+            {% call modal_editor("remove-result-{}".format(id), url_for("results.remove", session_id=session.id, player_id=id), "Remove Result", submit_label="Remove", submit_color="danger") %}
                 Really remove the result for player <strong class="text-danger">{{ player_name_id(players[r.player_id]) }}</strong>?
             {% endcall %}
         </td>
@@ -51,7 +51,7 @@
         <td>
             {{ modal_editor_open("add-result-{}".format(id), "Add Result", "success") }}
 
-            {% call modal_editor("add-result-{}".format(id), url_for("results.add", series_id=series.id, player_id=id), "Add Result", submit_label="Add", submit_color="success") %}
+            {% call modal_editor("add-result-{}".format(id), url_for("results.add", session_id=session.id, player_id=id), "Add Result", submit_label="Add", submit_color="success") %}
                 <div>
                     <label for="points" class="form-label">Sum of Game Points</label>
                     <input id="points" name="points" type="number" value="0"
@@ -84,7 +84,7 @@
         <table class="table">
             <thead>
             <tr>
-                <th>Table ID</th>
+                <th>Match ID</th>
                 <th>Player ID</th>
                 <th>Player Name</th>
                 <th>Points</th>

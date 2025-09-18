@@ -1,13 +1,11 @@
 # pyright: reportIncompatibleVariableOverride=false
 
 from sqlmodel import SQLModel, Field, Relationship
-
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pyskat.data_model.match import Match, MatchPublic
-    from pyskat.data_model.player import Player, PlayerPublic
+    from pyskat.data_model.match import Match
+    from pyskat.data_model.player import Player
 
 
 class ResultBase(SQLModel):
@@ -28,11 +26,6 @@ class Result(ResultBase, table=True):
 class ResultPublic(ResultBase):
     player_id: int = Field(gt=0)
     match_id: int = Field(gt=0)
-
-
-class ResultPublicDeep(ResultPublic):
-    match: "MatchPublic | None" = None
-    player: "PlayerPublic | None" = None
 
 
 class ResultCreate(ResultBase):

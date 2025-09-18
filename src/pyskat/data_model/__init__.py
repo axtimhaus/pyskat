@@ -3,27 +3,29 @@ from pyskat.data_model.player import (
     PlayerPublic,
     PlayerCreate,
     PlayerUpdate,
-    PlayerPublicDeep,
 )
 from pyskat.data_model.result import (
     Result,
     ResultPublic,
     ResultCreate,
     ResultUpdate,
-    ResultPublicDeep,
 )
 from pyskat.data_model.session import (
     Session,
     SessionPublic,
     SessionCreate,
     SessionUpdate,
-    SessionPublicDeep,
 )
 from pyskat.data_model.match import (
     Match,
     MatchPublic,
     MatchCreate,
     MatchUpdate,
+)
+from pyskat.data_model.deep_responses import (
+    PlayerPublicDeep,
+    ResultPublicDeep,
+    SessionPublicDeep,
     MatchPublicDeep,
 )
 

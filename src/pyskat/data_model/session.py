@@ -6,8 +6,8 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pyskat.data_model.player import Player, PlayerPublic
-    from pyskat.data_model.match import Match, MatchPublic
+    from pyskat.data_model.player import Player
+    from pyskat.data_model.match import Match
 
 __all__ = ["Session", "SessionPublic", "SessionCreate", "SessionUpdate"]
 
@@ -30,11 +30,6 @@ class Session(SessionBase, table=True):
 
 class SessionPublic(SessionBase):
     id: int = Field(ge=0, primary_key=True)
-
-
-class SessionPublicDeep(SessionPublic):
-    matches: list["MatchPublic"] = []
-    players: list["PlayerPublic"] = []
 
 
 class SessionCreate(SessionBase):

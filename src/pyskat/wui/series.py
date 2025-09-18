@@ -3,17 +3,29 @@ from datetime import datetime
 from pydantic import ValidationError
 
 from .helpers import flash_validation_error
-from flask import render_template, g, request, Blueprint, abort, flash, redirect, url_for, session
+from flask import (
+    render_template,
+    g,
+    request,
+    Blueprint,
+    abort,
+    flash,
+    redirect,
+    url_for,
+    session,
+)
 
-bp = Blueprint("series", __name__, url_prefix="/series")
+bp = Blueprint("session", __name__, url_prefix="/session")
 
 
 @bp.get("/")
 def index():
-    series_list = g.backend.series(g.session).all()
+    session_list = g.backend.session(g.session).all()
 
     return render_template(
-        "series.html", series=series_list, now=datetime.today().isoformat(sep=" ", timespec="minutes")
+        "session.html",
+        session=session_list,
+        now=datetime.today().isoformat(sep=" ", timespec="minutes"),
     )
 
 
@@ -27,7 +39,7 @@ def add():
         abort(400, description="Invalid form data submitted.")
 
     try:
-        g.backend.series(g.session).add(
+        g.backend.session(g.session).add(
             name=name,
             date=datetime.fromisoformat(date),
             remarks=remarks,
@@ -48,14 +60,14 @@ def update(id: int):
         abort(400, description="Invalid form data submitted.")
 
     try:
-        g.backend.series(g.session).update(
+        g.backend.session(g.session).update(
             id=id,
             name=name,
             date=datetime.fromisoformat(date),
             remarks=remarks,
         )
     except KeyError:
-        flash_series_not_found(id)
+        flash_session_not_found(id)
     except ValidationError as e:
         flash_validation_error(e)
 
@@ -65,21 +77,21 @@ def update(id: int):
 @bp.post("/remove/<int:id>")
 def remove(id: int):
     try:
-        g.backend.series(g.session).remove(id)
+        g.backend.session(g.session).remove(id)
     except KeyError:
-        flash_series_not_found(id)
+        flash_session_not_found(id)
     return redirect_to_index()
 
 
 @bp.post("/set-current/<int:id>")
 def set_current(id):
-    session["current_series"] = id
+    session["current_session"] = id
     return redirect_to_index()
 
 
-def flash_series_not_found(id: int):
-    flash(f"Series {id} not found.", "danger")
+def flash_session_not_found(id: int):
+    flash(f"Session {id} not found.", "danger")
 
 
 def redirect_to_index():
-    return redirect(url_for("series.index"))
+    return redirect(url_for("session.index"))

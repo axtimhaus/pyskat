@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% from "macros.html" import modal_editor, modal_editor_open %}
-{% block title %}PySkat - Series{% endblock %}
+{% block title %}PySkat - Session{% endblock %}
 {% block head %}
 {% endblock %}
 {% block content %}
-    <h1>Series</h1>
+    <h1>Session</h1>
 
-    {{ modal_editor_open("add-series", "Add New Series", "success") }}
-    {% call modal_editor("add-series", url_for("series.add"), "Add New Series", submit_label="Add", submit_color="success") %}
+    {{ modal_editor_open("add-session", "Add New Session", "success") }}
+    {% call modal_editor("add-session", url_for("session.add"), "Add New Session", submit_label="Add", submit_color="success") %}
         <div class="mb-3">
             <label for="name" class="form-label">Name</label>
             <input id="name" name="name" type="text" value="" class="form-control"/>
@@ -34,7 +34,7 @@
             </tr>
             </thead>
             <tbody>
-            {% for s in series %}
+            {% for s in session %}
                 <tr>
                     <td>{{ s.id }}</td>
                     <td>{{ s.name }}</td>
@@ -42,17 +42,17 @@
                     <td>{{ s.remarks }}</td>
                     <td>
                         <div class="btn-group">
-                            {% if session.current_series == s.id %}
+                            {% if session.current_session == s.id %}
                                 <button class="btn btn-success" disabled>Current</button>
                             {% else %}
-                                <input type="submit" form="form-set-series-{{- s.id -}}" class="btn btn-primary"
+                                <input type="submit" form="form-set-session-{{- s.id -}}" class="btn btn-primary"
                                        value="Set Current"/>
                             {% endif %}
-                            <a class="btn btn-primary" href="{{ url_for("tables.index", series_id=s.id) }}">View Tables</a>
-                            {{ modal_editor_open("edit-series-{}".format(s.id), "Edit", "warning") }}
-                            {{ modal_editor_open("remove-series-{}".format(s.id), "Remove", "danger") }}
+                            <a class="btn btn-primary" href="{{ url_for("tables.index", session_id=s.id) }}">View Matchs</a>
+                            {{ modal_editor_open("edit-session-{}".format(s.id), "Edit", "warning") }}
+                            {{ modal_editor_open("remove-session-{}".format(s.id), "Remove", "danger") }}
                         </div>
-                        {% call modal_editor("edit-series-{}".format(s.id), url_for("series.update", id=s.id), "Edit Series", "Edit", "warning") %}
+                        {% call modal_editor("edit-session-{}".format(s.id), url_for("session.update", id=s.id), "Edit Session", "Edit", "warning") %}
                             <div>
                                 <label for="name" class="form-label">Name</label>
                                 <input id="name" name="name" type="text" value="{{- s.name -}}"
@@ -69,8 +69,8 @@
                                        class="form-control"/>
                             </div>
                         {% endcall %}
-                        {% call modal_editor("remove-series-{}".format(s.id), url_for("series.remove", id=s.id), "Remove Series", "Remove", "danger") %}
-                            Really remove the series <strong class="text-danger">{{- s.name -}}</strong> with the ID
+                        {% call modal_editor("remove-session-{}".format(s.id), url_for("session.remove", id=s.id), "Remove Session", "Remove", "danger") %}
+                            Really remove the session <strong class="text-danger">{{- s.name -}}</strong> with the ID
                             <strong class="text-danger">{{- s.id -}}</strong>?
                         {% endcall %}
                     </td>
@@ -80,7 +80,7 @@
         </table>
     </div>
 
-    {% for s in series %}
-        <form id="form-set-series-{{- s.id -}}" method="post" action="{{ url_for("series.set_current", id=s.id) }}"></form>
+    {% for s in session %}
+        <form id="form-set-session-{{- s.id -}}" method="post" action="{{ url_for("session.set_current", id=s.id) }}"></form>
     {% endfor %}
 {% endblock %}

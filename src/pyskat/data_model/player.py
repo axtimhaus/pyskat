@@ -4,9 +4,10 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pyskat.data_model.result import Result, ResultPublic
-    from pyskat.data_model.match import Match, MatchPublic
-    from pyskat.data_model.player_match_link import PlayerMatchLink
+    from pyskat.data_model.result import Result
+    from pyskat.data_model.match import Match
+
+from pyskat.data_model.player_match_link import PlayerMatchLink
 
 __all__ = ["Player", "PlayerPublic", "PlayerCreate", "PlayerUpdate"]
 
@@ -28,11 +29,6 @@ class Player(PlayerBase, table=True):
 
 class PlayerPublic(PlayerBase):
     id: int = Field(gt=0)
-
-
-class PlayerPublicDeep(PlayerPublic):
-    matches: list["MatchPublic"] = []
-    results: list["ResultPublic"] = []
 
 
 class PlayerCreate(PlayerBase):

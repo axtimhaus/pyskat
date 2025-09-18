@@ -1,7 +1,7 @@
 def test_date(client, faker):
     date = faker.date_time().isoformat()
 
-    res = client.post("/series", json={"date": date})
+    res = client.post("/session", json={"date": date})
     assert res.status_code == 200
     assert res.json() == {
         "id": 1,
@@ -15,7 +15,7 @@ def test_date_name(client, faker):
     date = faker.date_time().isoformat()
     name = faker.name()
 
-    res = client.post("/series", json={"date": date, "name": name})
+    res = client.post("/session", json={"date": date, "name": name})
     assert res.status_code == 200
     assert res.json() == {
         "id": 1,
@@ -30,7 +30,7 @@ def test_date_remarks(client, faker):
     remarks = faker.word()
 
     res = client.post(
-        "/series",
+        "/session",
         json={"date": date, "remarks": remarks},
     )
     assert res.status_code == 200
@@ -48,7 +48,7 @@ def test_date_name_remarks(client, faker):
     remarks = faker.word()
 
     res = client.post(
-        "/series",
+        "/session",
         json={
             "date": date,
             "name": name,
@@ -71,7 +71,7 @@ def test_multiple(client, faker):
         remarks = faker.word()
 
         res = client.post(
-            "/series",
+            "/session",
             json={
                 "date": date,
                 "name": name,

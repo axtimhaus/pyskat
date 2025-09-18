@@ -35,6 +35,12 @@ dependencies = [
 [project.optional-dependencies]
 fake = ["faker ~= 28.0"]
 
+[dependency-groups]
+dev = [
+    "faker~=28.0",
+    "httpx~=0.28.0",
+    "pytest~=8.0",
+]
 
 [project.urls]
 Documentation = "https://github.com/axtimhaus/pyskat/blob/main/README.md"
@@ -49,11 +55,6 @@ path = "src/pyskat/__about__.py"
 
 [tool.hatch.build]
 packages = ["src/pyskat"]
-
-[tool.hatch.envs.default]
-path = ".venv"
-dependencies = ["pytest", "httpx"]
-features = ["fake"]
 
 [tool.pyright]
 venvPath = "."

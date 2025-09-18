@@ -10,13 +10,15 @@ from pyskat.data_model import (
     MatchPublicDeep,
     MatchCreate,
     MatchUpdate,
+    Player,
+    Session,
 )
 
 
 def create_router(dependencies: Dependencies) -> APIRouter:
     router = APIRouter(
-        prefix="/matches",
-        tags=["matches"],
+        prefix="/match",
+        tags=["match"],
     )
 
     @router.get("/", response_model=list[MatchPublic])
@@ -29,16 +31,48 @@ def create_router(dependencies: Dependencies) -> APIRouter:
 
     @router.post("/", response_model=MatchPublic)
     async def create(match: MatchCreate, db: dependencies.db):
+        from pyskat.api import player
+        from pyskat.api import session
+
         db_match = Match.model_validate(match)
+        db_match.players = [
+            db.get(Player, pid) or player.raise_not_found(pid)
+            for pid in match.player_ids
+        ]
+        if match.session_id is not None:
+            db_match.session = db.get(
+                Session, match.session_id
+            ) or session.raise_not_found(match.session_id)
         db.add(db_match)
         db.commit()
         return db_match
 
     @router.patch("/{match_id}", response_model=MatchPublic)
     async def update(match_id: int, match: MatchUpdate, db: dependencies.db):
+        from pyskat.api import player
+        from pyskat.api import session
+
         db_match = db.get(Match, match_id) or raise_not_found(match_id)
-        match_data = match.model_dump(exclude_unset=True)
-        db_match.sqlmodel_update(match_data)
+        db_match.sqlmodel_update(match.model_dump(exclude_unset=True))
+        if match.player_ids is not None:
+            db_match.players = [
+                db.get(Player, pid) or player.raise_not_found(pid)
+                for pid in match.player_ids
+            ]
+        if match.add_player_ids is not None:
+            for pid in match.add_player_ids:
+                db_match.players.append(
+                    db.get(Player, pid) or player.raise_not_found(pid)
+                )
+        if match.del_player_ids is not None:
+            for pid in match.del_player_ids:
+                db_match.players.remove(
+                    db.get(Player, pid) or player.raise_not_found(pid)
+                )
+        if match.session_id is not None:
+            db_match.session = db.get(
+                Session, match.session_id
+            ) or session.raise_not_found(match.session_id)
         db.add(db_match)
         db.commit()
         db.refresh(db_match)
