@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
-from pyskat.api.app import Dependencies
+from pyskat.dependencies import DbSessionDep
 from pyskat.data_model import (
     Match,
     MatchPublic,
@@ -15,76 +15,73 @@ from pyskat.data_model import (
 )
 
 
-def create_router(dependencies: Dependencies) -> APIRouter:
-    router = APIRouter(
-        prefix="/match",
-        tags=["match"],
-    )
+router = APIRouter(
+    prefix="/match",
+    tags=["match"],
+)
 
-    @router.get("/", response_model=list[MatchPublic])
-    async def get(db: dependencies.db):
-        return db.exec(select(Match)).all()
 
-    @router.get("/{match_id}", response_model=MatchPublicDeep)
-    async def get_single(match_id: int, db: dependencies.db):
-        return db.get(Match, match_id) or raise_not_found(match_id)
+@router.get("/", response_model=list[MatchPublic])
+async def get(db: DbSessionDep):
+    return db.exec(select(Match)).all()
 
-    @router.post("/", response_model=MatchPublic)
-    async def create(match: MatchCreate, db: dependencies.db):
-        from pyskat.api import player
-        from pyskat.api import session
 
-        db_match = Match.model_validate(match)
+@router.get("/{match_id}", response_model=MatchPublicDeep)
+async def get_single(match_id: int, db: DbSessionDep):
+    return db.get(Match, match_id) or raise_not_found(match_id)
+
+
+@router.post("/", response_model=MatchPublic)
+async def create(match: MatchCreate, db: DbSessionDep):
+    from pyskat.api import player
+    from pyskat.api import session
+
+    db_match = Match.model_validate(match)
+    db_match.players = [
+        db.get(Player, pid) or player.raise_not_found(pid) for pid in match.player_ids
+    ]
+    if match.session_id is not None:
+        db_match.session = db.get(Session, match.session_id) or session.raise_not_found(
+            match.session_id
+        )
+    db.add(db_match)
+    db.commit()
+    return db_match
+
+
+@router.patch("/{match_id}", response_model=MatchPublic)
+async def update(match_id: int, match: MatchUpdate, db: DbSessionDep):
+    from pyskat.api import player
+    from pyskat.api import session
+
+    db_match = db.get(Match, match_id) or raise_not_found(match_id)
+    db_match.sqlmodel_update(match.model_dump(exclude_unset=True))
+    if match.player_ids is not None:
         db_match.players = [
             db.get(Player, pid) or player.raise_not_found(pid)
             for pid in match.player_ids
         ]
-        if match.session_id is not None:
-            db_match.session = db.get(
-                Session, match.session_id
-            ) or session.raise_not_found(match.session_id)
-        db.add(db_match)
-        db.commit()
-        return db_match
+    if match.add_player_ids is not None:
+        for pid in match.add_player_ids:
+            db_match.players.append(db.get(Player, pid) or player.raise_not_found(pid))
+    if match.del_player_ids is not None:
+        for pid in match.del_player_ids:
+            db_match.players.remove(db.get(Player, pid) or player.raise_not_found(pid))
+    if match.session_id is not None:
+        db_match.session = db.get(Session, match.session_id) or session.raise_not_found(
+            match.session_id
+        )
+    db.add(db_match)
+    db.commit()
+    db.refresh(db_match)
+    return db_match
 
-    @router.patch("/{match_id}", response_model=MatchPublic)
-    async def update(match_id: int, match: MatchUpdate, db: dependencies.db):
-        from pyskat.api import player
-        from pyskat.api import session
 
-        db_match = db.get(Match, match_id) or raise_not_found(match_id)
-        db_match.sqlmodel_update(match.model_dump(exclude_unset=True))
-        if match.player_ids is not None:
-            db_match.players = [
-                db.get(Player, pid) or player.raise_not_found(pid)
-                for pid in match.player_ids
-            ]
-        if match.add_player_ids is not None:
-            for pid in match.add_player_ids:
-                db_match.players.append(
-                    db.get(Player, pid) or player.raise_not_found(pid)
-                )
-        if match.del_player_ids is not None:
-            for pid in match.del_player_ids:
-                db_match.players.remove(
-                    db.get(Player, pid) or player.raise_not_found(pid)
-                )
-        if match.session_id is not None:
-            db_match.session = db.get(
-                Session, match.session_id
-            ) or session.raise_not_found(match.session_id)
-        db.add(db_match)
-        db.commit()
-        db.refresh(db_match)
-        return db_match
-
-    @router.delete("/{match_id}", status_code=204)
-    async def delete(match_id: int, db: dependencies.db):
-        db_match = db.get(Match, match_id) or raise_not_found(match_id)
-        db.delete(db_match)
-        db.commit()
-
-    return router
+@router.delete("/{match_id}", status_code=204)
+async def delete(match_id: int, db: DbSessionDep):
+    db_match = db.get(Match, match_id) or raise_not_found(match_id)
+    db.delete(db_match)
+    db.commit()
 
 
 def raise_not_found(match_id: int):

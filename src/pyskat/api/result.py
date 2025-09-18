@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
-from pyskat.api.app import Dependencies
+from pyskat.dependencies import DbSessionDep
 from pyskat.data_model import (
     Result,
     ResultPublic,
@@ -12,63 +12,64 @@ from pyskat.data_model import (
     ResultPublicDeep,
 )
 
+router = APIRouter(
+    prefix="/result",
+    tags=["result"],
+)
 
-def create_router(dependencies: Dependencies) -> APIRouter:
-    router = APIRouter(
-        prefix="/result",
-        tags=["result"],
+
+@router.get("/", response_model=list[ResultPublic])
+async def get(db: DbSessionDep):
+    return db.exec(select(Result)).all()
+
+
+@router.get("/{match_id}/{player_id}", response_model=ResultPublicDeep)
+async def get_single(player_id: int, match_id: int, db: DbSessionDep):
+    return db.get(
+        Result, dict(match_id=match_id, player_id=player_id)
+    ) or raise_not_found(match_id, player_id)
+
+
+@router.post("/{match_id}/{player_id}", response_model=ResultPublic)
+async def create(
+    player_id: int,
+    match_id: int,
+    result: ResultCreate,
+    db: DbSessionDep,
+):
+    db_result = Result.model_validate(
+        result.model_dump() | dict(match_id=match_id, player_id=player_id)
     )
+    db.add(db_result)
+    db.commit()
+    return db_result
 
-    @router.get("/", response_model=list[ResultPublic])
-    async def get(db: dependencies.db):
-        return db.exec(select(Result)).all()
 
-    @router.get("/{match_id}/{player_id}", response_model=ResultPublicDeep)
-    async def get_single(player_id: int, match_id: int, db: dependencies.db):
-        return db.get(
-            Result, dict(match_id=match_id, player_id=player_id)
-        ) or raise_not_found(match_id, player_id)
+@router.patch("/{match_id}/{player_id}", response_model=ResultPublic)
+async def update(
+    player_id: int,
+    match_id: int,
+    result: ResultUpdate,
+    db: DbSessionDep,
+):
+    db_result = db.get(
+        Result, dict(match_id=match_id, player_id=player_id)
+    ) or raise_not_found(match_id, player_id)
+    result_data = result.model_dump(exclude_unset=True)
+    db_result.sqlmodel_update(result_data)
+    db.add(db_result)
+    db.commit()
+    db.refresh(db_result)
+    return db_result
 
-    @router.post("/{match_id}/{player_id}", response_model=ResultPublic)
-    async def create(
-        player_id: int,
-        match_id: int,
-        result: ResultCreate,
-        db: dependencies.db,
-    ):
-        db_result = Result.model_validate(
-            result.model_dump() | dict(match_id=match_id, player_id=player_id)
-        )
-        db.add(db_result)
-        db.commit()
-        return db_result
 
-    @router.patch("/{match_id}/{player_id}", response_model=ResultPublic)
-    async def update(
-        player_id: int,
-        match_id: int,
-        result: ResultUpdate,
-        db: dependencies.db,
-    ):
-        db_result = db.get(
-            Result, dict(match_id=match_id, player_id=player_id)
-        ) or raise_not_found(match_id, player_id)
-        result_data = result.model_dump(exclude_unset=True)
-        db_result.sqlmodel_update(result_data)
-        db.add(db_result)
-        db.commit()
-        db.refresh(db_result)
-        return db_result
-
-    @router.delete("/{match_id}/{player_id}", status_code=204)
-    async def delete(player_id: int, match_id: int, db: dependencies.db):
-        db_result = db.get(
-            Result, dict(match_id=match_id, player_id=player_id)
-        ) or raise_not_found(match_id, player_id)
-        db.delete(db_result)
-        db.commit()
-
-    return router
+@router.delete("/{match_id}/{player_id}", status_code=204)
+async def delete(player_id: int, match_id: int, db: DbSessionDep):
+    db_result = db.get(
+        Result, dict(match_id=match_id, player_id=player_id)
+    ) or raise_not_found(match_id, player_id)
+    db.delete(db_result)
+    db.commit()
 
 
 def raise_not_found(match_id: int, player_id: int):
