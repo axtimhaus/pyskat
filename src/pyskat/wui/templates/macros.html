@@ -1,5 +1,5 @@
 {% macro nav_link(endpoint_group, endpoint, name) %}
-    {% if request.endpoint.startswith(endpoint_group) %}
+    {% if request.url.path.startswith(endpoint_group) %}
         <li class="nav-item active"><a class="nav-link" href="{{ url_for(endpoint) }}">{{ name }}</a></li>
     {% else %}
         <li class="nav-item"><a class="nav-link" href="{{ url_for(endpoint) }}">{{ name }}</a></li>
@@ -17,7 +17,7 @@
 {% endmacro %}
 
 
-{% macro modal_editor(id, endpoint, title, submit_label, submit_color) %}
+{% macro modal_editor(id, title, submit_label, submit_color) %}
     <div class="modal fade" id="modal-{{ id }}" tabindex="-1"
          aria-labelledby="modal-add-result-label" aria-hidden="true">
         <div class="modal-dialog">
@@ -27,13 +27,13 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="form-{{ id }}" method="post" action="{{ endpoint }}">
+                    <form id="form-{{ id }}">
                         {{ caller() }}
                     </form>
                 </div>
                 <div class="modal-footer">
                     <div class="btn-group">
-                        <input type="submit" form="form-{{ id }}" class="btn btn-{{ submit_color }}"
+                        <input type="button" id="submit-{{ id }}" form="form-{{ id }}" class="btn btn-{{ submit_color }}"
                                value="{{ submit_label }}"/>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>

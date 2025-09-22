@@ -1,5 +1,6 @@
 from typing import Annotated, Generator
 from fastapi import Depends
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import URL
 from pydantic_settings import (
     BaseSettings,
@@ -13,12 +14,24 @@ import sqlalchemy
 import sqlmodel
 
 
+class WuiSettings(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    theme: str = "darkly"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_prefix="PYSKAT_", toml_file="config.toml", frozen=True
+        env_prefix="PYSKAT_",
+        env_nested_delimiter="__",
+        toml_file="pyskat.toml",
+        frozen=True,
     )
 
-    database_url: str | URL = "sqlite:///test.db"
+    database_url: str | URL = "sqlite:///pyskat.db"
+    session_secret: str = "CHANGE_ME"
+
+    wui: WuiSettings = WuiSettings()
 
     @classmethod
     def settings_customise_sources(

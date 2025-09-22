@@ -22,17 +22,17 @@ router = APIRouter(
 
 
 @router.get("/", response_model=list[MatchPublic])
-async def get(db: DbSessionDep):
+async def api_match_get_all(db: DbSessionDep):
     return db.exec(select(Match)).all()
 
 
 @router.get("/{match_id}", response_model=MatchPublicDeep)
-async def get_single(match_id: int, db: DbSessionDep):
+async def api_match_get_single(match_id: int, db: DbSessionDep):
     return db.get(Match, match_id) or raise_not_found(match_id)
 
 
 @router.post("/", response_model=MatchPublic)
-async def create(match: MatchCreate, db: DbSessionDep):
+async def api_match_create(match: MatchCreate, db: DbSessionDep):
     from pyskat.api import player
     from pyskat.api import session
 
@@ -50,7 +50,7 @@ async def create(match: MatchCreate, db: DbSessionDep):
 
 
 @router.patch("/{match_id}", response_model=MatchPublic)
-async def update(match_id: int, match: MatchUpdate, db: DbSessionDep):
+async def api_match_update(match_id: int, match: MatchUpdate, db: DbSessionDep):
     from pyskat.api import player
     from pyskat.api import session
 
@@ -78,7 +78,7 @@ async def update(match_id: int, match: MatchUpdate, db: DbSessionDep):
 
 
 @router.delete("/{match_id}", status_code=204)
-async def delete(match_id: int, db: DbSessionDep):
+async def api_match_delete(match_id: int, db: DbSessionDep):
     db_match = db.get(Match, match_id) or raise_not_found(match_id)
     db.delete(db_match)
     db.commit()

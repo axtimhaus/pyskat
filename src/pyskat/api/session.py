@@ -20,17 +20,17 @@ router = APIRouter(
 
 
 @router.get("/", response_model=list[SessionPublic])
-async def get(db: DbSessionDep):
+async def api_session_get_all(db: DbSessionDep):
     return db.exec(select(Session)).all()
 
 
 @router.get("/{session_id}", response_model=SessionPublicDeep)
-async def get_single(session_id: int, db: DbSessionDep):
+async def api_session_get_single(session_id: int, db: DbSessionDep):
     return db.get(Session, session_id) or raise_not_found(session_id)
 
 
 @router.post("/", response_model=SessionPublic)
-async def create(session: SessionCreate, db: DbSessionDep):
+async def api_session_create(session: SessionCreate, db: DbSessionDep):
     db_session = Session.model_validate(session)
     db.add(db_session)
     db.commit()
@@ -38,7 +38,7 @@ async def create(session: SessionCreate, db: DbSessionDep):
 
 
 @router.patch("/{session_id}", response_model=SessionPublic)
-async def update(session_id: int, session: SessionUpdate, db: DbSessionDep):
+async def api_session_update(session_id: int, session: SessionUpdate, db: DbSessionDep):
     db_session = db.get(Session, session_id) or raise_not_found(session_id)
     session_data = session.model_dump(exclude_unset=True)
     db_session.sqlmodel_update(session_data)
@@ -49,7 +49,7 @@ async def update(session_id: int, session: SessionUpdate, db: DbSessionDep):
 
 
 @router.delete("/{session_id}", status_code=204)
-async def delete(session_id: int, db: DbSessionDep):
+async def api_session_delete(session_id: int, db: DbSessionDep):
     db_session = db.get(Session, session_id) or raise_not_found(session_id)
     db.delete(db_session)
     db.commit()

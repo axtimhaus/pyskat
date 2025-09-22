@@ -19,19 +19,19 @@ router = APIRouter(
 
 
 @router.get("/", response_model=list[ResultPublic])
-async def get(db: DbSessionDep):
+async def api_result_get_all(db: DbSessionDep):
     return db.exec(select(Result)).all()
 
 
 @router.get("/{match_id}/{player_id}", response_model=ResultPublicDeep)
-async def get_single(player_id: int, match_id: int, db: DbSessionDep):
+async def api_result_get_single(player_id: int, match_id: int, db: DbSessionDep):
     return db.get(
         Result, dict(match_id=match_id, player_id=player_id)
     ) or raise_not_found(match_id, player_id)
 
 
 @router.post("/{match_id}/{player_id}", response_model=ResultPublic)
-async def create(
+async def api_result_create(
     player_id: int,
     match_id: int,
     result: ResultCreate,
@@ -46,7 +46,7 @@ async def create(
 
 
 @router.patch("/{match_id}/{player_id}", response_model=ResultPublic)
-async def update(
+async def api_result_update(
     player_id: int,
     match_id: int,
     result: ResultUpdate,
@@ -64,7 +64,7 @@ async def update(
 
 
 @router.delete("/{match_id}/{player_id}", status_code=204)
-async def delete(player_id: int, match_id: int, db: DbSessionDep):
+async def api_result_delete(player_id: int, match_id: int, db: DbSessionDep):
     db_result = db.get(
         Result, dict(match_id=match_id, player_id=player_id)
     ) or raise_not_found(match_id, player_id)

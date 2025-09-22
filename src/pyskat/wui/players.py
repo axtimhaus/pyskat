@@ -1,78 +1,24 @@
-from pydantic import ValidationError
+from fastapi import Form
+from fastapi.requests import Request
+from fastapi.routing import APIRouter
+from typing import Annotated
+from starlette.responses import RedirectResponse
+from pyskat.wui.jinja import RenderTemplateDep
+from sqlmodel import select
 
-from .helpers import flash_validation_error
-from flask import render_template, g, request, Blueprint, abort, redirect, url_for, flash
+from pyskat.dependencies import DbSessionDep
+from pyskat.data_model import (
+    Player,
+    PlayerPublic,
+    PlayerCreate,
+    PlayerUpdate,
+    PlayerPublicDeep,
+)
 
-bp = Blueprint("players", __name__, url_prefix="/players")
-
-
-@bp.get("/")
-def index():
-    players_list = g.backend.players(g.session).all()
-
-    return render_template(
-        "players.html",
-        players=players_list,
-    )
-
-
-@bp.post("/add")
-def add():
-    try:
-        name = request.form["name"]
-        remarks = request.form["remarks"]
-        active = request.form.get("active", False, bool)
-    except KeyError:
-        abort(400, description="Invalid form data submitted.")
-
-    try:
-        g.backend.players(g.session).add(
-            name=name,
-            active=active,
-            remarks=remarks,
-        )
-    except ValidationError as e:
-        flash_validation_error(e)
-
-    return redirect_to_index()
+router = APIRouter(prefix="/players", tags=["player"])
 
 
-@bp.post("/update/<int:id>")
-def update(id: int):
-    try:
-        name = request.form["name"]
-        remarks = request.form["remarks"]
-        active = request.form.get("active", False, bool)
-    except KeyError:
-        abort(400, description="Invalid form data submitted.")
-
-    try:
-        g.backend.players(g.session).update(
-            id=id,
-            name=name,
-            active=active,
-            remarks=remarks,
-        )
-    except KeyError:
-        flash_player_not_found(id)
-    except ValidationError as e:
-        flash_validation_error(e)
-
-    return redirect_to_index()
-
-
-@bp.post("/remove/<int:id>")
-def remove(id: int):
-    try:
-        g.backend.players(g.session).remove(id)
-    except KeyError:
-        flash_player_not_found(id)
-    return redirect_to_index()
-
-
-def flash_player_not_found(id: int):
-    flash(f"Player {id} not found.", "danger")
-
-
-def redirect_to_index():
-    return redirect(url_for("players.index"))
+@router.get("/")
+def wui_players(render_template: RenderTemplateDep, db: DbSessionDep):
+    players = db.exec(select(Player)).all()
+    return render_template("players.html", players=players)

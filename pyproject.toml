@@ -20,14 +20,12 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 dependencies = [
-    "typer ~= 0.15.0",
-    "fastapi ~= 0.115.0",
+    "fastapi[standard] ~= 0.117.0",
+    "itsdangerous ~= 2.2",
     "sqlmodel ~= 0.0.22",
     "pydantic-settings ~= 2.7",
-    "uvicorn",
     "pandas ~= 2.2",
     "rich ~= 13.7",
-    "flask ~= 3.0",
     "pluggy ~= 1.2",
     "plotly ~= 5.24",
 ]
@@ -48,7 +46,7 @@ Issues = "https://github.com/axtimhaus/pyskat/issues"
 Source = "https://github.com/axtimhaus/pyskat/"
 
 [project.scripts]
-pyskat = "pyskat.cli:main"
+pyskat = "pyskat.cli:cli"
 
 [tool.hatch.version]
 path = "src/pyskat/__about__.py"

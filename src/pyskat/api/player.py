@@ -20,17 +20,18 @@ router = APIRouter(
 
 
 @router.get("/", response_model=list[PlayerPublic])
-async def get(db: DbSessionDep):
+async def api_player_get_all(db: DbSessionDep):
     return db.exec(select(Player)).all()
 
 
 @router.get("/{player_id}", response_model=PlayerPublicDeep)
-async def get_single(player_id: int, db: DbSessionDep):
-    return db.get(Player, player_id) or raise_not_found(player_id)
+async def api_player_get_single(player_id: int, db: DbSessionDep):
+    return db.get(Player, player_id)
+    raise HTTPException(status_code=404, detail=f"Player {player_id} not found")
 
 
 @router.post("/", response_model=PlayerPublic)
-def create(player: PlayerCreate, db: DbSessionDep):
+def api_player_create(player: PlayerCreate, db: DbSessionDep):
     db_player = Player.model_validate(player)
     db.add(db_player)
     db.commit()
@@ -38,7 +39,7 @@ def create(player: PlayerCreate, db: DbSessionDep):
 
 
 @router.patch("/{player_id}", response_model=PlayerPublic)
-async def update(player_id: int, player: PlayerUpdate, db: DbSessionDep):
+async def api_player_update(player_id: int, player: PlayerUpdate, db: DbSessionDep):
     db_player = db.get(Player, player_id) or raise_not_found(player_id)
     player_data = player.model_dump(exclude_unset=True)
     db_player.sqlmodel_update(player_data)
@@ -49,7 +50,7 @@ async def update(player_id: int, player: PlayerUpdate, db: DbSessionDep):
 
 
 @router.delete("/{player_id}", status_code=204)
-async def delete(player_id: int, db: DbSessionDep):
+async def api_player_delete(player_id: int, db: DbSessionDep):
     db_player = db.get(Player, player_id) or raise_not_found(player_id)
     db.delete(db_player)
     db.commit()

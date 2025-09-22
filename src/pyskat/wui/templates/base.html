@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/{{- config.THEME -}}/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/{{- settings.wui.theme -}}/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     {% block head %}
     {% endblock %}
@@ -24,22 +24,18 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarColor01">
             <ul class="navbar-nav me-auto">
-                {{ nav_link("players", "players.index", "Players") }}
-                {{ nav_link("session", "session.index", "Session") }}
-                {{ nav_link("tables", "tables.index", "Matchs") }}
-                {{ nav_link("results", "results.index", "Results") }}
-                {{ nav_link("evaluation", "evaluation.index", "Evaluation") }}
+                {{ nav_link("players", "wui_players", "Players") }}
             </ul>
         </div>
     </div>
 </nav>
 
 <div class="container-md mt-5">
-    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% with messages = get_flashed_messages() %}
         {% if messages %}
             <div class="mb-5">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{- category -}}">{{ message }}</div>
+                {% for message in messages %}
+                    <div class="alert alert-{{- message.category -}}">{{ message.text }}</div>
                 {% endfor %}
             </div>
         {% endif %}
