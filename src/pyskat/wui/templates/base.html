@@ -25,6 +25,7 @@
         <div class="collapse navbar-collapse" id="navbarColor01">
             <ul class="navbar-nav me-auto">
                 {{ nav_link("players", "wui_players", "Players") }}
+                {{ nav_link("sessions", "wui_sessions", "Sessions") }}
             </ul>
         </div>
     </div>
@@ -35,11 +36,39 @@
         {% if messages %}
             <div class="mb-5">
                 {% for message in messages %}
-                    <div class="alert alert-{{- message.category -}}">{{ message.text }}</div>
+                    <div class="alert alert-{{- message.category -}}">
+                        {% if message.category == "info" %}
+                        <i class="bi-info-circle me-1"></i>
+                        {% elif message.category == "success" %}
+                        <i class="bi-check-circle me-1"></i>
+                        {% elif message.category == "warning" %}
+                        <i class="bi-exclamation-circle me-1"></i>
+                        {% elif message.category == "danger" %}
+                        <i class="bi-x-circle me-1"></i>
+                        {% endif %}
+                        <span> {{ message.text }} </span>
+                    </div>
                 {% endfor %}
             </div>
         {% endif %}
     {% endwith %}
+
+    <script>
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+
+        async function flash_message(text, category) {
+            let message = {
+                text: text,
+                category: category
+            }
+            let response = await fetch('{{ url_for('wui_flash_message') }}', {
+                method:'POST',
+                headers: headers,
+                body: JSON.stringify(message)
+            });
+        }
+    </script>
 
     {% block content %}
     {% endblock %}

@@ -1,19 +1,10 @@
-from fastapi import Form
-from fastapi.requests import Request
 from fastapi.routing import APIRouter
-from typing import Annotated
-from starlette.responses import RedirectResponse
-from pyskat.wui.jinja import RenderTemplateDep
 from sqlmodel import select
 
+from pyskat.wui.jinja import RenderTemplateDep
 from pyskat.dependencies import DbSessionDep
-from pyskat.data_model import (
-    Player,
-    PlayerPublic,
-    PlayerCreate,
-    PlayerUpdate,
-    PlayerPublicDeep,
-)
+from pyskat.data_model import Player
+
 
 router = APIRouter(prefix="/players", tags=["player"])
 

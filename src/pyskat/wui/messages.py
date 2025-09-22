@@ -8,6 +8,7 @@ class MessageCategory(StrEnum):
     DANGER = "danger"
     WARNING = "warning"
     INFO = "info"
+    SUCCESS = "success"
 
 
 class Message(BaseModel):

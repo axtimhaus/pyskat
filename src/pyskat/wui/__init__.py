@@ -7,6 +7,7 @@ from pydantic_core import InitErrorDetails
 from pyskat.wui.jinja import RenderTemplateDep
 from pyskat.wui.messages import Message, MessageCategory, flash_message
 import pyskat.wui.players as players
+import pyskat.wui.sessions as sessions
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi import FastAPI
@@ -36,6 +37,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="wui_static")
 
 app.include_router(players.router)
+app.include_router(sessions.router)
 
 
 @app.get("/", response_class=HTMLResponse)
