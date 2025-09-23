@@ -2,7 +2,8 @@ import pytest
 from faker import Faker
 from fastapi.testclient import TestClient
 
-import pyskat
+import pyskat.dependencies
+import pyskat.api
 
 
 @pytest.fixture
@@ -15,11 +16,11 @@ def settings(tmp_path) -> pyskat.dependencies.Settings:
 @pytest.fixture
 def client(settings, monkeypatch) -> TestClient:
     monkeypatch.setitem(
-        pyskat.app.dependency_overrides,
+        pyskat.api.app.dependency_overrides,
         pyskat.dependencies.get_settings,
         lambda: settings,
     )
-    client = TestClient(pyskat.app)
+    client = TestClient(pyskat.api.app)
     return client
 
 

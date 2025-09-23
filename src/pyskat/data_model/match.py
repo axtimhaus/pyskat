@@ -1,5 +1,6 @@
 # pyright: reportIncompatibleVariableOverride=false
 
+from pydantic import BaseModel
 from sqlmodel import SQLModel, Field, Relationship
 from typing import TYPE_CHECKING, Optional
 
@@ -52,3 +53,12 @@ class MatchUpdate(SQLModel):
     player_ids: list[int] | None = None
     add_player_ids: list[int] | None = None
     del_player_ids: list[int] | None = None
+
+
+class MatchShuffleSpec(BaseModel):
+    session_id: int | None = Field(gt=0, default=None)
+    active_only: bool = True
+    include: list[int] | None = None
+    exclude: list[int] | None = None
+    include_only: list[int] | None = None
+    prefer_match_size: int = 4

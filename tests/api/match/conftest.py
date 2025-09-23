@@ -2,9 +2,9 @@ import pytest
 
 
 @pytest.fixture
-def add_players(client, faker):
+def add_players(client, faker, request):
     def yield_players():
-        for i in range(1, 6):
+        for i in range(1, 12 + 1):
             name = faker.name()
             res = client.post("/player", json={"name": name})
             assert res.status_code == 200

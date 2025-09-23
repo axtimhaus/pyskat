@@ -1,8 +1,10 @@
 # pyright: reportInvalidTypeForm=false
 
 from fastapi import APIRouter, HTTPException
-from sqlmodel import select
+from sqlmodel import col, select, or_
 
+from pyskat.data_model.match import MatchShuffleSpec
+from pyskat.data_model.shuffle_matches import shuffle_players_to_matches
 from pyskat.dependencies import DbSessionDep
 from pyskat.data_model import (
     Match,
@@ -82,6 +84,41 @@ async def api_match_delete(match_id: int, db: DbSessionDep):
     db_match = db.get(Match, match_id) or raise_not_found(match_id)
     db.delete(db_match)
     db.commit()
+
+
+@router.post("/create_shuffled", response_model=list[MatchPublic])
+async def api_match_create_shuffled(db: DbSessionDep, spec: MatchShuffleSpec):
+    from pyskat.api import session
+
+    if spec.include_only is not None:
+        query = select(Player).where(col(Player.id).in_(spec.include_only))
+    else:
+        query = select(Player)
+
+        if spec.active_only:
+            query = query.where(
+                or_(col(Player.active), col(Player.id).in_(spec.include or []))
+            )
+
+        query = query.where(col(Player.id).not_in(spec.exclude or []))
+
+    players = list(db.exec(query).all())
+    shuffle = shuffle_players_to_matches(players, spec.prefer_match_size)
+
+    def _yield_matches():
+        for s in shuffle:
+            db_match = Match()
+            db_match.players = s
+            if spec.session_id is not None:
+                db_match.session = db.get(
+                    Session, spec.session_id
+                ) or session.raise_not_found(spec.session_id)
+            db.add(db_match)
+            yield db_match
+
+    matches = list(_yield_matches())
+    db.commit()
+    return matches
 
 
 def raise_not_found(match_id: int):
