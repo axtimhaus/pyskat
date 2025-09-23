@@ -26,8 +26,7 @@ async def api_player_get_all(db: DbSessionDep):
 
 @router.get("/{player_id}", response_model=PlayerPublicDeep)
 async def api_player_get_single(player_id: int, db: DbSessionDep):
-    return db.get(Player, player_id)
-    raise HTTPException(status_code=404, detail=f"Player {player_id} not found")
+    return db.get(Player, player_id) or raise_not_found(player_id)
 
 
 @router.post("/", response_model=PlayerPublic)
