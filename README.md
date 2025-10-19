@@ -1,3 +1,7 @@
+> [!IMPORTANT]
+> This repository is archived as development has been moved to Codeberg <https://codeberg.org/axtimhaus/pyskat>
+
+
 # PySkat - A simple CLI and TUI Skat Tournament Management Program
 
 PySkat is a simple tool for managing tournaments of the German national card game Skat. The functionality follows
